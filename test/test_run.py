@@ -9,15 +9,15 @@ import setuptools
 from setuptools import Distribution, Extension
 
 
-@pytest.fixture
-def extension():
-    return Extension('_pgo_test', sources=['_pgo_test.c'], language='c')
-
-
-def test_default(extension, mocker):
+@pytest.mark.parametrize('extensions', [
+    [Extension('_pgo_test', sources=['_pgo_test.c'], language='c')],
+    [Extension('_pgo_test1', sources=['_pgo_test1.c'], language='c'),
+     Extension('_pgo_test2', sources=['_pgo_test2.c'], language='c')]
+])
+def test_default(extensions, mocker):
     build_ext = pgo.make_build_ext([])
     distribution = Distribution({
-        "ext_modules": [extension],
+        "ext_modules": extensions,
         "cmdclass": {"build_ext": build_ext},
     })
     cmd = build_ext(distribution)
@@ -38,17 +38,22 @@ def test_default(extension, mocker):
     profile_extensions = mocker.patch.object(cmd, 'profile_extensions')
     cmd.run()
 
-    assert build_extension.call_count == 2
-    assert build_extension_no_pgo.call_count == 0 
-    assert build_extension_pgo_generate.call_count == 1
+    assert build_extension.call_count == 2 * len(extensions)
+    assert build_extension_no_pgo.call_count == 0
+    assert build_extension_pgo_generate.call_count == 1 * len(extensions)
     assert profile_extensions.call_count == 1
-    assert build_extension_pgo_use.call_count == 1
+    assert build_extension_pgo_use.call_count == 1 * len(extensions)
     
     
-def test_default_profile_fails(extension, mocker):
+@pytest.mark.parametrize('extensions', [
+    [Extension('_pgo_test', sources=['_pgo_test.c'], language='c')],
+    [Extension('_pgo_test1', sources=['_pgo_test1.c'], language='c'),
+     Extension('_pgo_test2', sources=['_pgo_test2.c'], language='c')]
+])
+def test_default_profile_fails(extensions, mocker):
     build_ext = pgo.make_build_ext([])
     distribution = Distribution({
-        "ext_modules": [extension],
+        "ext_modules": extensions,
         "cmdclass": {"build_ext": build_ext},
     })
     cmd = build_ext(distribution)
@@ -69,17 +74,22 @@ def test_default_profile_fails(extension, mocker):
     profile_extensions = mocker.spy(cmd, 'profile_extensions')
     cmd.run()
 
-    assert build_extension.call_count == 2
-    assert build_extension_no_pgo.call_count == 1
-    assert build_extension_pgo_generate.call_count == 1
+    assert build_extension.call_count == 2 * len(extensions)
+    assert build_extension_no_pgo.call_count == 1 * len(extensions)
+    assert build_extension_pgo_generate.call_count == 1 * len(extensions)
     assert profile_extensions.call_count == 1
     assert build_extension_pgo_use.call_count == 0
     
    
-def test_pgo_require(extension, mocker):
+@pytest.mark.parametrize('extensions', [
+    [Extension('_pgo_test', sources=['_pgo_test.c'], language='c')],
+    [Extension('_pgo_test1', sources=['_pgo_test1.c'], language='c'),
+     Extension('_pgo_test2', sources=['_pgo_test2.c'], language='c')]
+])
+def test_pgo_require(extensions, mocker):
     build_ext = pgo.make_build_ext([])
     distribution = Distribution({
-        "ext_modules": [extension],
+        "ext_modules": extensions,
         "cmdclass": {"build_ext": build_ext},
     })
     cmd = build_ext(distribution)
@@ -101,17 +111,22 @@ def test_pgo_require(extension, mocker):
     profile_extensions = mocker.patch.object(cmd, 'profile_extensions')
     cmd.run()
 
-    assert build_extension.call_count == 2
+    assert build_extension.call_count == 2 * len(extensions)
     assert build_extension_no_pgo.call_count == 0
-    assert build_extension_pgo_generate.call_count == 1
+    assert build_extension_pgo_generate.call_count == 1 * len(extensions)
     assert profile_extensions.call_count == 1
-    assert build_extension_pgo_use.call_count == 1
+    assert build_extension_pgo_use.call_count == 1 * len(extensions)
     
 
-def test_pgo_require_profile_fails(extension, mocker):
+@pytest.mark.parametrize('extensions', [
+    [Extension('_pgo_test', sources=['_pgo_test.c'], language='c')],
+    [Extension('_pgo_test1', sources=['_pgo_test1.c'], language='c'),
+     Extension('_pgo_test2', sources=['_pgo_test2.c'], language='c')]
+])
+def test_pgo_require_profile_fails(extensions, mocker):
     build_ext = pgo.make_build_ext([])
     distribution = Distribution({
-        "ext_modules": [extension],
+        "ext_modules": extensions,
         "cmdclass": {"build_ext": build_ext},
     })
     cmd = build_ext(distribution)
@@ -135,17 +150,22 @@ def test_pgo_require_profile_fails(extension, mocker):
     with pytest.raises(pgo.PgoFailedError):
         cmd.run()
 
-    assert build_extension.call_count == 1
+    assert build_extension.call_count == 1 * len(extensions)
     assert build_extension_no_pgo.call_count == 0
-    assert build_extension_pgo_generate.call_count == 1
+    assert build_extension_pgo_generate.call_count == 1 * len(extensions)
     assert profile_extensions.call_count == 1
     assert build_extension_pgo_use.call_count == 0
     
 
-def test_pgo_disable(extension, mocker):
+@pytest.mark.parametrize('extensions', [
+    [Extension('_pgo_test', sources=['_pgo_test.c'], language='c')],
+    [Extension('_pgo_test1', sources=['_pgo_test1.c'], language='c'),
+     Extension('_pgo_test2', sources=['_pgo_test2.c'], language='c')]
+])
+def test_pgo_disable(extensions, mocker):
     build_ext = pgo.make_build_ext([])
     distribution = Distribution({
-        "ext_modules": [extension],
+        "ext_modules": extensions,
         "cmdclass": {"build_ext": build_ext},
     })
     cmd = build_ext(distribution)
@@ -167,8 +187,8 @@ def test_pgo_disable(extension, mocker):
     profile_extensions = mocker.patch.object(cmd, 'profile_extensions')
     cmd.run()
 
-    assert build_extension.call_count == 1
-    assert build_extension_no_pgo.call_count == 1
+    assert build_extension.call_count == 1 * len(extensions)
+    assert build_extension_no_pgo.call_count == 1 * len(extensions)
     assert build_extension_pgo_generate.call_count == 0
     assert profile_extensions.call_count == 0
     assert build_extension_pgo_use.call_count == 0
