@@ -133,6 +133,6 @@ def test_does_optimize(cpytoken_extension, cpytoken_pydecimal_py):
     )
     pgo_time = float(res.stdout.decode('utf8'))
     
-    # check for at least a 5% speed decrease
+    # check for at least a 2% speed decrease
     print(pgo_time, no_pgo_time)
-    assert pgo_time < (no_pgo_time * .95)
+    assert pgo_time < (no_pgo_time * .98)
