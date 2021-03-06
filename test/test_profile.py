@@ -22,7 +22,6 @@ def temp_dir():
 
 
 def test_python_path_set(extension, temp_dir, mocker):
-    print(temp_dir)
     build_ext = pgo.make_build_ext([
         sys.executable,
         '-c', textwrap.dedent("""
