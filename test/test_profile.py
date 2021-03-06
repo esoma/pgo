@@ -54,7 +54,9 @@ def test_can_import(cpytoken_extension):
     with pytest.raises(ImportError):
         import _pgo_test
         
-    build_ext = pgo.make_build_ext([sys.executable, '-c', 'import _pgo_test'])
+    build_ext = pgo.make_build_ext([
+        sys.executable, '-c', 'import _pgo_cpytoken'
+    ])
     distribution = Distribution({
         "ext_modules": [cpytoken_extension],
         "cmdclass": {"build_ext": build_ext},
