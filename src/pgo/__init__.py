@@ -12,7 +12,7 @@ from distutils.errors import DistutilsError, DistutilsOptionError
 from setuptools.command.build_ext import build_ext as _build_ext
 
 
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 
 
 class _PgoMode(enum.Enum):
@@ -70,7 +70,7 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
                 except Exception as ex:
                     message = 'PGO build failed: ' + str(ex)
                     if self.pgo_require:
-                        raise DistutilsError(message)
+                        raise PgoFailedError(message)
                     log.warn(message)
                     self._pgo_mode = _PgoMode.NONE
                     self._pgo_paths = []
@@ -80,13 +80,16 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
 
         def build_extension(self, ext):
             if self._pgo_mode is _PgoMode.NONE:
-                super().build_extension(ext)
+                self.build_extension_no_pgo(ext)
                 return
             elif self._pgo_mode is _PgoMode.USE:
                 self.build_extension_pgo_use(ext)
             else:
                 assert self._pgo_mode is _PgoMode.GENERATE
                 self.build_extension_pgo_generate(ext)
+                
+        def build_extension_no_pgo(self, ext):
+            super().build_extension(ext)
 
         def build_extension_pgo_generate(self, ext):
             ext = deepcopy(ext)
@@ -131,3 +134,7 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
             return self.compiler.__class__.__name__ == 'MSVCCompiler'
 
     return BuildExtension
+
+    
+class PgoFailedError(DistutilsError):
+    pass
