@@ -4,8 +4,6 @@ import pgo
 # pytest
 import pytest
 # setuptools
-import distutils.errors
-import setuptools
 from setuptools import Distribution, Extension
 
 
