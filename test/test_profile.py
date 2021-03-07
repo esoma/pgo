@@ -52,7 +52,7 @@ def test_python_path_set(extension, temp_dir, mocker):
 
 def test_can_import(extension):
     with pytest.raises(ModuleNotFoundError):
-        import _pgo_cpytoken
+        import _pgo_test
         
     build_ext = pgo.make_build_ext([
         sys.executable, '-c', 'import sys; print(sys.path); import _pgo_test'
