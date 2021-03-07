@@ -51,6 +51,19 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
                 self.force = True
 
         def build_extensions(self):
+            compiler_spawn = self.compiler.spawn
+            def spawn(cmd, **kwargs):
+                old_gcov_eae = os.getenv("GCOV_EXIT_AT_ERROR")
+                os.environ["GCOV_EXIT_AT_ERROR"] = '1'
+                try:
+                    compiler_spawn(cmd, **kwargs)
+                finally:
+                    if old_gcov_eae is None:
+                        del os.environ["GCOV_EXIT_AT_ERROR"]
+                    else:
+                        os.environ["GCOV_EXIT_AT_ERROR"] = old_gcov_eae
+            self.compiler.spawn = spawn
+        
             if not self.pgo_disable:
                 try:
                     self._pgo_mode = _PgoMode.GENERATE
