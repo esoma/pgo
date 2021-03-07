@@ -33,7 +33,7 @@ jobs:
 
     - name: Test
       run: |
-        python3 -m pytest
+        python3 -m pytest --cov=pgo
 
     - name: Codecov
       uses: codecov/codecov-action@v1.2.1
