@@ -70,9 +70,26 @@ def find_vc2017():
         return path
     return None
 
-    
+
+# a map keyed by get_platform() return values to values accepted by
+# 'vcvarsall.bat'. Always cross-compile from x86 to work with the
+# lighter-weight MSVC installs that do not include native 64-bit tools
+PLAT_TO_VCVARS = {
+    "win32" : 'x86',
+    "win-amd64" : 'x86_amd64',
+    "win-arm32" : 'x86_arm',
+    "win-arm64" : 'x86_arm64'
+}
+  
+  
 def get_vcvarsall():
     platform = get_platform()
+    try:
+        plat_spec = PLAT_TO_VCVARS[platform]
+    except KeyError:
+        raise DistutilsPlatformError(
+            '--plat-name must be one of {}'.format(tuple(PLAT_TO_VCVARS))
+        )
     path = find_vc2017()
     if not path:
         path = find_vc2015()
