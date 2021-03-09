@@ -95,4 +95,4 @@ def get_vcvarsall():
         path = find_vc2015()
     if not path:
         raise DistutilsPlatformError('Unable to find vcvarsall.bat')
-    return os.path.join(path, 'vcvarsall.bat'), platform
+    return os.path.join(path, 'vcvarsall.bat'), plat_spec
