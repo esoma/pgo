@@ -4,13 +4,15 @@ import os
 import subprocess
 try:
     import winreg
-except ModuleNotFound:
+except ModuleNotFoundError:
     winreg = None
 # setuptools
 from distutils.errors import DistutilsPlatformError
 from distutils.util import get_platform
 
+
 def find_vc2015():
+    # this was roughly copied from distutils._msvccompiler
     if not winreg:
         return None
     try:
@@ -38,7 +40,9 @@ def find_vc2015():
                     best_version, best_dir = version, vc_dir
     return best_dir
 
+    
 def find_vc2017():
+    # this was roughly copied from distutils._msvccompiler
     root = (
         os.environ.get('ProgramFiles(x86)') or
         os.environ.get('ProgramFiles')
@@ -66,6 +70,7 @@ def find_vc2017():
         return path
     return None
 
+    
 def get_vcvarsall():
     platform = get_platform()
     path = find_vc2017()
