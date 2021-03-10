@@ -65,6 +65,8 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
                     log.info('profiling')
                     self.profile_extensions()
                     
+                    
+                    
                     self._pgo_mode = _PgoMode.USE
                     log.info('building with PGO profile data')
                     super().build_extensions()
@@ -117,30 +119,40 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
             super().build_extension(ext)
 
         def profile_extensions(self):
-            command = profile_command
-            if self._is_msvc():
-                # clean out any old profile data for msvc, otherwise it spits
-                # out warnings and could have incompatible/old/bad data get
-                # profiled
-                for pgo_path in self._pgo_paths:
-                    for file in os.listdir(pgo_path):
-                        if file.endswith('.pgc'):
-                            os.remove(os.path.join(pgo_path, file))
-                pgort_dll = _msvc.get_pgort_dll()
-                for path in self._pgo_paths:
-                    shutil.copyfile(
-                        pgort_dll,
-                        os.path.join(path, os.path.basename(pgort_dll))
-                    )
-            # make sure the pure python libraries have been built so that
-            # they're accessible to the profiling command
-            self.run_command('build_py')
-            # add the build location to the PYTHONPATH so that we import the
-            # newly built stuff over anything currently installed
-            env = {**os.environ}
-            env["PYTHONPATH"] = os.pathsep.join(self._pgo_paths)
-            
-            subprocess.run(command, check=True, env=env)
+            temp_files = []
+            try:
+                command = profile_command
+                if self._is_msvc():
+                    # clean out any old profile data for msvc, otherwise it
+                    # spits out warnings and could have incompatible/old/bad
+                    # data get profiled
+                    for pgo_path in self._pgo_paths:
+                        for file in os.listdir(pgo_path):
+                            if file.endswith('.pgc'):
+                                os.remove(os.path.join(pgo_path, file))
+                    # make sure the msvc pgo runtime dll is in the same dir as
+                    # the modules
+                    source_pgort_dll = _msvc.get_pgort_dll()
+                    for path in self._pgo_paths:
+                        dest_pgort_dll = os.path.join(
+                            path, os.path.basename(source_pgort_dll)
+                        )
+                        temp_files.append(dest_pgort_dll)
+                        shutil.copyfile(source_pgort_dll, dest_pgort_dll)
+                # make sure the pure python libraries have been built so that
+                # they're accessible to the profiling command
+                self.run_command('build_py')
+                # add the build location to the PYTHONPATH so that we import
+                # the newly built stuff over anything currently installed
+                env = {**os.environ}
+                env["PYTHONPATH"] = os.pathsep.join(self._pgo_paths)
+                subprocess.run(command, check=True, env=env)
+            finally:
+                for temp_file in temp_files:
+                    try:
+                        os.remove(temp_file)
+                    except FileNotFoundError:
+                        pass
             
         def _is_msvc(self):
             return self.compiler.__class__.__name__ == 'MSVCCompiler'
