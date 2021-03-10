@@ -106,11 +106,15 @@ def get_vcvarsall():
     
     
 def get_pgort_dll():
-    path = subprocess.check_output([
-        *get_vcvarsall(), '>nul', '2>nul',
+    out = subprocess.check_output([
+        'cmd', '/u', '/c', *get_vcvarsall(), '>nul', '2>nul',
         '&&',
-        'echo', '%PATH%',
-    ]).decode('utf8')
+        'set', 'path',
+    ]).decode('utf-16le')
+    path = [
+        l for l in out.splitlines()
+        if l.startswith('Path=')
+    ][0][len('Path='):]
     for path in path.split(';'):
         try:
             for file in os.listdir(path):
