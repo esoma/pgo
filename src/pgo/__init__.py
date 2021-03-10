@@ -5,6 +5,7 @@ __all__ = ['make_build_ext']
 from copy import deepcopy
 import enum
 import os
+import shutil
 import subprocess
 # setuptools
 from distutils import log
@@ -125,9 +126,12 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
                     for file in os.listdir(pgo_path):
                         if file.endswith('.pgc'):
                             os.remove(os.path.join(pgo_path, file))
-                # ensure the windows development environment is set up so that
-                # the module can link to the msvc pgo runtime library
-                command = (*_msvc.get_vcvarsall(), '&&', *command)
+                pgort_dll = _msvc.get_pgort_dll()
+                for path in self._pgo_paths:
+                    shutil.copyfile(
+                        pgort_dll,
+                        os.path.join(path, os.path.basename(pgort_dll))
+                    )
             # make sure the pure python libraries have been built so that
             # they're accessible to the profiling command
             self.run_command('build_py')

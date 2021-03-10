@@ -2,6 +2,7 @@
 # python
 import os
 import subprocess
+import sys
 try:
     import winreg
 except ModuleNotFoundError:
@@ -71,28 +72,52 @@ def find_vc2017():
     return None
 
 
-# a map keyed by get_platform() return values to values accepted by
-# 'vcvarsall.bat'. Always cross-compile from x86 to work with the
-# lighter-weight MSVC installs that do not include native 64-bit tools
 PLAT_TO_VCVARS = {
     "win32" : 'x86',
-    "win-amd64" : 'x86_amd64',
-    "win-arm32" : 'x86_arm',
-    "win-arm64" : 'x86_arm64'
+    "win-amd64" : 'amd64',
+    "win-arm32" : 'arm',
+    "win-arm64" : 'arm64'
 }
   
   
 def get_vcvarsall():
-    platform = get_platform()
+    if os.environ['PROGRAMFILES(X86)']:
+        host = 'amd64'
+    else:
+        host = 'x86' 
     try:
-        plat_spec = PLAT_TO_VCVARS[platform]
+        target = PLAT_TO_VCVARS[get_platform()]
     except KeyError:
         raise DistutilsPlatformError(
             '--plat-name must be one of {}'.format(tuple(PLAT_TO_VCVARS))
         )
+    if host == target:
+        arch = host
+    else:
+        arch = '{}_{}'.format(host, target)
+        
     path = find_vc2017()
     if not path:
         path = find_vc2015()
     if not path:
         raise DistutilsPlatformError('Unable to find vcvarsall.bat')
-    return os.path.join(path, 'vcvarsall.bat'), plat_spec
+        
+    return os.path.join(path, 'vcvarsall.bat'), arch
+    
+    
+def get_pgort_dll():
+    path = subprocess.check_output([
+        *get_vcvarsall(), '>nul', '2>nul',
+        '&&',
+        'echo', '%PATH%',
+    ]).decode('utf8')
+    for path in path.split(';'):
+        try:
+            for file in os.listdir(path):
+                if file == 'pgort140.dll':
+                    return os.path.join(path, file)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            pass
+    raise DistutilsPlatformError('Unable to find pgort140.dll')
