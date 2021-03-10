@@ -65,8 +65,6 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
                     log.info('profiling')
                     self.profile_extensions()
                     
-                    
-                    
                     self._pgo_mode = _PgoMode.USE
                     log.info('building with PGO profile data')
                     super().build_extensions()
@@ -74,6 +72,7 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
                     self._pgo_mode = _PgoMode.NONE
                     return
                 except Exception as ex:
+                    self._clean_all_pgo_files()
                     message = 'PGO build failed: ' + str(ex)
                     if self.pgo_require:
                         raise PgoFailedError(message)
@@ -117,19 +116,14 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
                 ext.extra_compile_args.append('-fprofile-use')
                 ext.extra_link_args.append('-fprofile-use')
             super().build_extension(ext)
+            self._clean_all_pgo_files()
 
         def profile_extensions(self):
             temp_files = []
             try:
                 command = profile_command
+                self._clean_pgc_files()
                 if self._is_msvc():
-                    # clean out any old profile data for msvc, otherwise it
-                    # spits out warnings and could have incompatible/old/bad
-                    # data get profiled
-                    for pgo_path in self._pgo_paths:
-                        for file in os.listdir(pgo_path):
-                            if file.endswith('.pgc'):
-                                os.remove(os.path.join(pgo_path, file))
                     # make sure the msvc pgo runtime dll is in the same dir as
                     # the modules
                     source_pgort_dll = _msvc.get_pgort_dll()
@@ -153,6 +147,24 @@ def make_build_ext(profile_command, base_build_ext=_build_ext):
                         os.remove(temp_file)
                     except FileNotFoundError:
                         pass
+                        
+        def _clean_pgc_files(self):
+            if self._is_msvc():
+                for pgo_path in self._pgo_paths:
+                    for file in os.listdir(pgo_path):
+                        if file.endswith('.pgc'):
+                            os.remove(os.path.join(pgo_path, file))
+                            
+        def _clean_pgd_files(self):
+            if self._is_msvc():
+                for pgo_path in self._pgo_paths:
+                    for file in os.listdir(pgo_path):
+                        if file.endswith('.pgd'):
+                            os.remove(os.path.join(pgo_path, file))
+                            
+        def _clean_all_pgo_files(self):
+            self._clean_pgc_files()
+            self._clean_pgd_files()
             
         def _is_msvc(self):
             return self.compiler.__class__.__name__ == 'MSVCCompiler'
