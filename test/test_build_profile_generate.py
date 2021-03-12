@@ -96,7 +96,7 @@ def test_set_build_dirs_through_build(argv, extension):
     
     
 @pytest.mark.skipif('MSC' not in sys.version, reason='not built with msvc')
-def test_run_mscv(
+def test_run(
         argv, extension,
         pgo_lib_dir, pgo_temp_dir,
         py_modules,
