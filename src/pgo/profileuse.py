@@ -9,6 +9,7 @@ from .compiler import is_msvc, _get_pgd
 # python
 from copy import deepcopy
 import os
+from pathlib import Path
 # setuptools
 try:
     from setuptools.command.build import build as _build
@@ -31,12 +32,14 @@ def make_build_profile_use(base_class):
             super().initialize_options()
             self.pgo_build_lib = None
             self.pgo_build_temp = None
+            self.__dirty = False
 
         def finalize_options(self):
             self.set_undefined_options('build',
                 ('pgo_build_lib', 'pgo_build_lib'),
                 ('pgo_build_temp', 'pgo_build_temp')
             )
+            self._touchfile = Path(self.pgo_build_lib, '.pgo-use')
 
         def get_sub_commands(self):
             commands = []
@@ -46,6 +49,26 @@ def make_build_profile_use(base_class):
                     command = command_profile_generate
                 commands.append(command)
             return commands
+            
+        def run(self):
+            profile = self.distribution.get_command_obj('profile')
+            profile.ensure_finalized()
+            if profile._touchfile.exists():
+                try:
+                    self.__dirty = (
+                        profile._touchfile.stat().st_mtime >
+                        self._touchfile.stat().st_mtime
+                    )
+                except FileNotFoundError:
+                    self.__dirty = True
+            super().run()
+            self._touchfile.touch()
+            
+        def run_command(self, cmd_name):
+            if cmd_name.endswith('_profile_use') and self.__dirty:
+                command = self.distribution.get_command_obj(cmd_name)
+                command.force = True
+            super().run_command(cmd_name)
 
     return build_profile_use
 
