@@ -3,21 +3,12 @@
 import pgo
 # python
 import os
-import sys
 # pytest
 import pytest
 # setuptools
 import distutils.errors
 from setuptools import Distribution
     
-    
-@pytest.fixture
-def argv():
-    original_argv = sys.argv
-    sys.argv = ['setup.py']
-    yield sys.argv
-    sys.argv = original_argv
-
 
 @pytest.mark.parametrize('cmd_args,pgo_require,pgo_disable', [
     ([], None, None),
