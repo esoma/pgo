@@ -160,11 +160,12 @@ def test_pgo_require_profile_fails(extensions, mocker):
     [Extension('_pgo_test1', sources=['_pgo_test1.c'], language='c'),
      Extension('_pgo_test2', sources=['_pgo_test2.c'], language='c')]
 ])
-def test_pgo_disable(extensions, mocker):
+def test_pgo_disable(extensions, mocker, pure_package):
     build_ext = pgo.make_build_ext([])
     distribution = Distribution({
         "ext_modules": extensions,
         "cmdclass": {"build_ext": build_ext},
+        
     })
     cmd = build_ext(distribution)
     cmd.pgo_disable = True

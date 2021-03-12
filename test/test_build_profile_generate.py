@@ -96,7 +96,12 @@ def test_set_build_dirs_through_build(argv, extension):
     
     
 @pytest.mark.skipif('MSC' not in sys.version, reason='not built with msvc')
-def test_run_mscv(argv, extension, pgo_lib_dir, pgo_temp_dir):
+def test_run_mscv(
+        argv, extension,
+        pgo_lib_dir, pgo_temp_dir,
+        py_modules,
+        packages, package_dir, script_name
+    ):
     argv.extend([
         'build_profile_generate',
         '--build-lib', pgo_lib_dir,
@@ -104,11 +109,22 @@ def test_run_mscv(argv, extension, pgo_lib_dir, pgo_temp_dir):
     ])
     distribution = Distribution({
         "ext_modules": [extension],
-        "pgo": { "profile_command": [] }
+        "pgo": { "profile_command": [] },
+        "py_modules": py_modules,
+        "packages": packages,
+        "package_dir": package_dir,
+        "script_name": script_name,
     })
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(pgo_lib_dir)
+    # pure python modules are "built"
+    for module in py_modules:
+        assert f'{module}.py' in lib_contents
+    # pure python packages are "built"
+    for package in packages:
+        assert package in lib_contents
+        assert '__init__.py' in os.listdir(os.path.join(pgo_lib_dir, package))
     # the c-extension is in the build dir
     assert [
         f for f in lib_contents
