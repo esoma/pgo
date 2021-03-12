@@ -16,7 +16,7 @@ TEST_DIR = pathlib.Path(__file__).parent.absolute()
 def extension():
     return Extension(
         '_pgo_test',
-        sources=[str(TEST_DIR / '_pgo_test.c')],
+        sources=[str(TEST_DIR / 'src/_pgo_test.c')],
         language='c'
     )
     
