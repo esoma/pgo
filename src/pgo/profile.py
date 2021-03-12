@@ -31,7 +31,6 @@ class profile(Command):
             ('pgo_build_temp', 'pgo_build_temp')
         )
         self.profile_command = tuple(self.distribution.pgo["profile_command"])
-        self._touchfile = Path(self.pgo_build_lib, '.pgo-profile')
 
     def run(self):
         env = dict(os.environ)
@@ -40,7 +39,6 @@ class profile(Command):
         env["PGO_PYTHON"] = sys.executable
         env["PYTHONPATH"] = self.generate_python_path(env)
         self.run_command(self.profile_command, env)
-        self._touchfile.touch()
 
     def run_command(self, profile_command, env):
         try:
