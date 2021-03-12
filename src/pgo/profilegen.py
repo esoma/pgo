@@ -1,5 +1,6 @@
 
 __all__ = [
+    'clean_profile_generate',
     'make_build_profile_generate',
     'make_build_ext_profile_generate',
     'make_build_py_profile_generate',
@@ -12,12 +13,43 @@ from copy import deepcopy
 import os
 import shutil
 # setuptools
+from distutils.dir_util import remove_tree
+from setuptools import Command
 try:
     from setuptools.command.build import build as _build
 except ModuleNotFoundError:
     from distutils.command.build import build as _build
 from setuptools.command.build_ext import build_ext as _build_ext
 from setuptools.command.build_py import build_py as _build_py
+
+
+class clean_profile_generate(Command):
+
+    description = (
+        'cleanup temporary files from "build" command related to profile '
+        'guided optimization'
+    )
+    user_options = []
+
+    def initialize_options(self):
+        self.pgo_build_lib = None
+        self.pgo_build_temp = None
+
+    def finalize_options(self):
+        self.set_undefined_options('clean',
+            ('pgo_build_lib', 'pgo_build_lib'),
+            ('pgo_build_temp', 'pgo_build_temp')
+        )
+
+    def run(self):
+        try:
+            remove_tree(self.pgo_build_lib, dry_run=self.dry_run)
+        except FileNotFoundError:
+            pass
+        try:
+            remove_tree(self.pgo_build_temp, dry_run=self.dry_run)
+        except FileNotFoundError:
+            pass
 
 
 def make_build_profile_generate(base_class):

@@ -1,6 +1,8 @@
 
 __all__ = ['make_build']
 
+# pgo
+from .util import _dir_to_pgo_dir
 # python
 import os
 # setuptools
@@ -10,10 +12,6 @@ try:
     from setuptools.command.build import build as _build
 except ModuleNotFoundError:
     from distutils.command.build import build as _build
-
-
-def _dir_to_pgo_dir(path):
-    return os.path.join(os.path.dirname(path), '.pgo-' + os.path.basename(path))
 
 
 def make_build(base_class):
