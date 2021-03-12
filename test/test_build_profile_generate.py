@@ -5,6 +5,7 @@ import pgo
 import pytest
 # python
 import os
+import sys
 # setuptools
 import distutils.errors
 from setuptools import Distribution
@@ -93,4 +94,30 @@ def test_set_build_dirs_through_build(argv, extension):
     assert cmd.build_lib == '.pgo-build'
     assert cmd.build_temp == '.pgo-temp'
     
-
+    
+@pytest.mark.skipif('MSC' not in sys.version, reason='not built with msvc')
+def test_run_mscv(argv, extension, pgo_lib_dir, pgo_temp_dir):
+    argv.extend([
+        'build_profile_generate',
+        '--build-lib', pgo_lib_dir,
+        '--build-temp', pgo_temp_dir,
+    ])
+    distribution = Distribution({
+        "ext_modules": [extension],
+        "pgo": { "profile_command": [] }
+    })
+    distribution.parse_command_line()
+    distribution.run_commands()
+    lib_contents = os.listdir(pgo_lib_dir)
+    # the c-extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(extension.name)
+        if f.endswith('.pyd')
+    ]
+    # the pgd file is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(extension.name)
+        if f.endswith('.pyd.pgd')
+    ]
