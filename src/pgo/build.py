@@ -2,6 +2,7 @@
 __all__ = ['make_build']
 
 # pgo
+from .command import PGO_BUILD_USER_OPTIONS
 from .util import _dir_to_pgo_dir
 # python
 import os
@@ -25,11 +26,7 @@ def make_build(base_class):
                                   'build will fail if environment does not '
                                   'support pgo'),
             ('pgo-disable', None, 'build without profile guided optimization'),
-            ('pgo-build-lib=', None, 'build directory for profiling (defaults '
-                                     'to build-lib prefixed with ".pgo-")'),
-            ('pgo-build-temp=', None, 'temporary build directory for profiling '
-                                      '(defaults to build-temp prefixed with '
-                                      '".pgo-")'),
+            *PGO_BUILD_USER_OPTIONS,
         ]
 
         def initialize_options(self):

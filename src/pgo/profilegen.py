@@ -7,6 +7,7 @@ __all__ = [
 ]
 
 # pgo
+from .command import PGO_BUILD_USER_OPTIONS
 from .compiler import is_msvc, _get_pgd, _get_pgort_dll
 # python
 from copy import deepcopy

@@ -2,6 +2,7 @@
 __all__ = ['make_clean']
 
 # pgo
+from .command import PGO_BUILD_USER_OPTIONS
 from .util import _dir_to_pgo_dir
 # setuptools
 try:
@@ -16,13 +17,7 @@ def make_clean(base_class):
 
     class clean(base_class):
 
-        user_options = base_class.user_options + [
-            ('pgo-build-lib=', None, 'build directory for profiling (defaults '
-                                     'to build-lib prefixed with ".pgo-")'),
-            ('pgo-build-temp=', None, 'temporary build directory for profiling '
-                                      '(defaults to build-temp prefixed with '
-                                      '".pgo-")'),
-        ]
+        user_options = tuple(base_class.user_options) + PGO_BUILD_USER_OPTIONS
 
         def initialize_options(self):
             super().initialize_options()
