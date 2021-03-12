@@ -1,4 +1,7 @@
 
+__all__ = ['is_msvc']
+
+
 # python
 import os
 import subprocess
@@ -12,7 +15,69 @@ from distutils.errors import DistutilsPlatformError
 from distutils.util import get_platform
 
 
-def find_vc2015():
+def is_msvc(compiler):
+    return compiler.__class__.__name__ == 'MSVCCompiler'
+    
+    
+def _get_pgd(rel_ext_path, pgo_build_lib):
+    return os.path.join(pgo_build_lib, f'{rel_ext_path}.pgd')
+    
+
+
+def _get_pgort_dll():
+    out = subprocess.check_output([
+        'cmd', '/u', '/c', *_get_vcvarsall(), '>nul', '2>nul',
+        '&&',
+        'set', 'path',
+    ]).decode('utf-16le')
+    path = [
+        l for l in out.splitlines()
+        if l.startswith('Path=')
+    ][0][len('Path='):]
+    for path in path.split(';'):
+        try:
+            for file in os.listdir(path):
+                if file == 'pgort140.dll':
+                    return os.path.join(path, file)
+        except FileNotFoundError:
+            pass
+        except OSError:
+            pass
+    raise DistutilsPlatformError('Unable to find pgort140.dll')
+
+
+def _get_vcvarsall():
+    PLAT_TO_VCVARS = {
+        "win32" : 'x86',
+        "win-amd64" : 'amd64',
+        "win-arm32" : 'arm',
+        "win-arm64" : 'arm64'
+    }
+    if os.environ['PROGRAMFILES(X86)']:
+        host = 'amd64'
+    else:
+        host = 'x86' 
+    try:
+        target = PLAT_TO_VCVARS[get_platform()]
+    except KeyError:
+        raise DistutilsPlatformError(
+            '--plat-name must be one of {}'.format(tuple(PLAT_TO_VCVARS))
+        )
+    if host == target:
+        arch = host
+    else:
+        arch = '{}_{}'.format(host, target)
+        
+    path = _find_vc2017()
+    if not path:
+        path = _find_vc2015()
+    if not path:
+        raise DistutilsPlatformError('Unable to find vcvarsall.bat')
+        
+    return os.path.join(path, 'vcvarsall.bat'), arch
+
+
+def _find_vc2015():
     # this was roughly copied from distutils._msvccompiler
     if not winreg:
         return None
@@ -40,9 +105,9 @@ def find_vc2015():
                 if version >= 14 and version > best_version:
                     best_version, best_dir = version, vc_dir
     return best_dir
-
     
-def find_vc2017():
+    
+def _find_vc2017():
     # this was roughly copied from distutils._msvccompiler
     root = (
         os.environ.get('ProgramFiles(x86)') or
@@ -70,58 +135,3 @@ def find_vc2017():
     if os.path.isdir(path):
         return path
     return None
-
-
-PLAT_TO_VCVARS = {
-    "win32" : 'x86',
-    "win-amd64" : 'amd64',
-    "win-arm32" : 'arm',
-    "win-arm64" : 'arm64'
-}
-  
-  
-def get_vcvarsall():
-    if os.environ['PROGRAMFILES(X86)']:
-        host = 'amd64'
-    else:
-        host = 'x86' 
-    try:
-        target = PLAT_TO_VCVARS[get_platform()]
-    except KeyError:
-        raise DistutilsPlatformError(
-            '--plat-name must be one of {}'.format(tuple(PLAT_TO_VCVARS))
-        )
-    if host == target:
-        arch = host
-    else:
-        arch = '{}_{}'.format(host, target)
-        
-    path = find_vc2017()
-    if not path:
-        path = find_vc2015()
-    if not path:
-        raise DistutilsPlatformError('Unable to find vcvarsall.bat')
-        
-    return os.path.join(path, 'vcvarsall.bat'), arch
-    
-    
-def get_pgort_dll():
-    out = subprocess.check_output([
-        'cmd', '/u', '/c', *get_vcvarsall(), '>nul', '2>nul',
-        '&&',
-        'set', 'path',
-    ]).decode('utf-16le')
-    path = [
-        l for l in out.splitlines()
-        if l.startswith('Path=')
-    ][0][len('Path='):]
-    for path in path.split(';'):
-        try:
-            for file in os.listdir(path):
-                if file == 'pgort140.dll':
-                    return os.path.join(path, file)
-        except FileNotFoundError:
-            pass
-        except OSError:
-            pass
-    raise DistutilsPlatformError('Unable to find pgort140.dll')
