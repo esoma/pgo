@@ -1,6 +1,8 @@
 
 __all__ = ['profile', 'ProfileError']
 
+# pgo
+from .command import PGO_BUILD_USER_OPTIONS
 # python
 import os
 import subprocess
@@ -17,24 +19,33 @@ class ProfileError(DistutilsExecError):
 class profile(Command):
 
     description = 'generate profiling data for profile guided optimization'
-    user_options = []
+    user_options = [
+        (
+            name[len("pgo-"):] if name.startswith('pgo-') else name,
+            value,
+            desc,
+        )
+        for name, value, desc in PGO_BUILD_USER_OPTIONS
+    ]
 
     def initialize_options(self):
         self.profile_command = None
-        self.pgo_build_lib = None
-        self.pgo_build_temp = None
+        self.build_lib = None
+        self.build_temp = None
 
     def finalize_options(self):
-        self.set_undefined_options('build',
-            ('pgo_build_lib', 'pgo_build_lib'),
-            ('pgo_build_temp', 'pgo_build_temp')
+        self.set_undefined_options('build_profile_generate',
+            ('build_lib', 'build_lib'),
+            ('build_temp', 'build_temp')
         )
         self.profile_command = tuple(self.distribution.pgo["profile_command"])
 
     def run(self):
+        if self.dry_run:
+            return
         env = dict(os.environ)
-        env["PGO_BUILD_LIB"] = self.pgo_build_lib
-        env["PGO_BUILD_TEMP"] = self.pgo_build_temp
+        env["PGO_BUILD_LIB"] = self.build_lib
+        env["PGO_BUILD_TEMP"] = self.build_temp
         env["PGO_PYTHON"] = sys.executable
         env["PYTHONPATH"] = self.generate_python_path(env)
         self.run_command(self.profile_command, env)
@@ -55,11 +66,11 @@ class profile(Command):
 
     def generate_python_path(self, env):
         # generates the appropriate PYTHONPATH for the existing environment with
-        # the pgo_build_lib at the front of it
+        # the build_lib at the front of it
         python_path = env.get("PYTHONPATH")
         if python_path:
-            python_path.split(os.pathsep)
+            python_path = python_path.split(os.pathsep)
         else:
             python_path = []
-        python_path.insert(0, self.pgo_build_lib)
+        python_path.insert(0, self.build_lib)
         return os.pathsep.join(python_path)
