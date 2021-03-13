@@ -54,21 +54,13 @@ def _get_vcvarsall():
         "win-arm32" : 'arm',
         "win-arm64" : 'arm64'
     }
-    if os.environ['PROGRAMFILES(X86)']:
-        host = 'amd64'
-    else:
-        host = 'x86' 
     try:
-        target = PLAT_TO_VCVARS[get_platform()]
+        arch = PLAT_TO_VCVARS[get_platform()]
     except KeyError:
         raise DistutilsPlatformError(
             '--plat-name must be one of {}'.format(tuple(PLAT_TO_VCVARS))
         )
-    if host == target:
-        arch = host
-    else:
-        arch = '{}_{}'.format(host, target)
-        
+
     path = _find_vc2017()
     if not path:
         path = _find_vc2015()
