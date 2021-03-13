@@ -14,7 +14,8 @@ from copy import deepcopy
 import os
 import shutil
 # setuptools
-from distutils.dir_util import remove_tree
+from distutils.dir_util import mkpath, remove_tree
+from distutils.file_util import copy_file
 from setuptools import Command
 try:
     from setuptools.command.build import build as _build
@@ -116,12 +117,14 @@ def make_build_ext_profile_generate(base_class):
                 # easy way to just add it to the importable path, so we'll copy
                 # it next to the extension that we build
                 pgort_dll = _get_pgort_dll()
-                shutil.copyfile(
-                    pgort_dll,
+                mkpath(os.path.dirname(ext_path), dry_run=self.dry_run)
+                copy_file(
+                    pgort_dll, 
                     os.path.join(
                         os.path.dirname(ext_path),
                         os.path.basename(pgort_dll)
-                    )
+                    ),
+                    dry_run=self.dry_run
                 )
             else:
                 ext.extra_compile_args.append('-fprofile-generate')
