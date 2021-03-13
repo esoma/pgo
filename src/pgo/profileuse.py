@@ -9,7 +9,6 @@ from .compiler import is_msvc, _get_pgd
 # python
 from copy import deepcopy
 import os
-from pathlib import Path
 # setuptools
 try:
     from setuptools.command.build import build as _build

@@ -3,7 +3,6 @@ __all__ = ['profile', 'ProfileError']
 
 # python
 import os
-from pathlib import Path
 import subprocess
 import sys
 # setuptools

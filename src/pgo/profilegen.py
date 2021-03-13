@@ -12,7 +12,6 @@ from .compiler import is_msvc, _get_pgd, _get_pgort_dll
 # python
 from copy import deepcopy
 import os
-import shutil
 # setuptools
 from distutils.dir_util import mkpath, remove_tree
 from distutils.file_util import copy_file

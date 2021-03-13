@@ -1,11 +1,9 @@
 
 __all__ = ['is_msvc']
 
-
 # python
 import os
 import subprocess
-import sys
 try:
     import winreg
 except ModuleNotFoundError:

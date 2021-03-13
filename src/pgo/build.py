@@ -4,8 +4,6 @@ __all__ = ['make_build']
 # pgo
 from .command import PGO_BUILD_USER_OPTIONS
 from .util import _dir_to_pgo_dir
-# python
-import os
 # setuptools
 from distutils.errors import (CCompilerError, DistutilsOptionError,
                               DistutilsPlatformError)

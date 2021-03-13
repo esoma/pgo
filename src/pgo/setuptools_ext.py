@@ -18,9 +18,7 @@ from distutils.log import warn
 
 def pgo(dist, attr, value):
     assert attr == 'pgo'
-    try:
-        profile_command = tuple(value["profile_command"])
-    except KeyError:
+    if "profile_command" not in value:
         warn(
             '"pgo" option defined, but no "profile_command" -- '
             'extensions will not be built with PGO'
