@@ -11,11 +11,14 @@ try:
 except ModuleNotFoundError:
     winreg = None
 # setuptools
+from distutils.ccompiler import CCompiler, new_compiler
 from distutils.errors import DistutilsPlatformError
 from distutils.util import get_platform
 
 
 def is_msvc(compiler):
+    if not isinstance(compiler, CCompiler):
+        compiler = new_compiler(compiler=compiler)
     return compiler.__class__.__name__ == 'MSVCCompiler'
     
     
