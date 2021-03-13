@@ -137,3 +137,29 @@ def test_run(
         if f.startswith(extension.name)
         if f.endswith('.pyd.pgd')
     ]
+
+
+def test_dry_run(
+        argv, extension,
+        pgo_lib_dir, pgo_temp_dir,
+        py_modules,
+        packages, package_dir, script_name
+    ):
+    argv.extend([
+        '--dry-run',
+        'build_profile_generate',
+        '--build-lib', pgo_lib_dir,
+        '--build-temp', pgo_temp_dir,
+    ])
+    distribution = Distribution({
+        "ext_modules": [extension],
+        "pgo": { "profile_command": [] },
+        "py_modules": py_modules,
+        "packages": packages,
+        "package_dir": package_dir,
+        "script_name": script_name,
+    })
+    distribution.parse_command_line()
+    distribution.run_commands()
+    assert not os.listdir(pgo_lib_dir)
+    assert not os.listdir(pgo_temp_dir)

@@ -120,3 +120,14 @@ def test_run(argv, distribution, pgo_lib_dir, py_modules, packages):
     for package in packages:
         assert package in lib_contents
         assert '__init__.py' in os.listdir(os.path.join(pgo_lib_dir, package))
+        
+        
+def test_dry_run(argv, distribution, pgo_lib_dir, py_modules, packages):
+    argv.extend([
+        '--dry-run',
+        'build_py_profile_generate',
+        '--build-lib', pgo_lib_dir,
+    ])
+    distribution.parse_command_line()
+    distribution.run_commands()
+    assert not os.listdir(pgo_lib_dir)
