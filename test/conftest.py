@@ -58,10 +58,30 @@ def pgo_lib_dir():
         dir.cleanup()
     except FileNotFoundError:
         pass
+        
+        
+@pytest.fixture
+def lib_dir():
+    dir = tempfile.TemporaryDirectory()
+    yield dir.name
+    try:
+        dir.cleanup()
+    except FileNotFoundError:
+        pass
     
     
 @pytest.fixture
 def pgo_temp_dir():
+    dir = tempfile.TemporaryDirectory()
+    yield dir.name
+    try:
+        dir.cleanup()
+    except FileNotFoundError:
+        pass
+
+
+@pytest.fixture
+def temp_dir():
     dir = tempfile.TemporaryDirectory()
     yield dir.name
     try:
