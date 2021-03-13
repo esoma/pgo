@@ -32,7 +32,6 @@ def make_build_profile_use(base_class):
             super().initialize_options()
             self.pgo_build_lib = None
             self.pgo_build_temp = None
-            self.__dirty = False
 
         def finalize_options(self):
             self.set_undefined_options('build',
