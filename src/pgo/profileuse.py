@@ -104,7 +104,8 @@ def make_build_ext_profile_use(base_class):
             except LinkError as ex:
                 if is_msvc(self.compiler):
                     # LNK1266 indicates the profile could not be found
-                    if str(ex).endswith('failed with exit code 1266'):
+                    if (str(ex).endswith('failed with exit code 1266') or
+                        str(ex).endswith('failed with exit status 1266')):
                         raise NoProfileError(ex)
                 raise
         
