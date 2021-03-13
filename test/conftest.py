@@ -54,11 +54,17 @@ def argv():
 def pgo_lib_dir():
     dir = tempfile.TemporaryDirectory()
     yield dir.name
-    dir.cleanup()
+    try:
+        dir.cleanup()
+    except FileNotFoundError:
+        pass
     
     
 @pytest.fixture
 def pgo_temp_dir():
     dir = tempfile.TemporaryDirectory()
     yield dir.name
-    dir.cleanup()
+    try:
+        dir.cleanup()
+    except FileNotFoundError:
+        pass
