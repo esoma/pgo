@@ -42,7 +42,7 @@ jobs:
 
     - name: Test
       run: |
-        python3 -m pytest --cov=pgo
+        python3 -m pytest --cov=pgo --cov-report=xml
 
     - name: Codecov
       uses: codecov/codecov-action@v1.2.1
