@@ -31,25 +31,32 @@ class clean_profile_generate(Command):
         'cleanup temporary files from "build" command related to profile '
         'guided optimization'
     )
-    user_options = []
+    user_options = [
+        (
+            name[len("pgo-"):] if name.startswith('pgo-') else name,
+            value,
+            desc,
+        )
+        for name, value, desc in PGO_BUILD_USER_OPTIONS
+    ]
 
     def initialize_options(self):
-        self.pgo_build_lib = None
-        self.pgo_build_temp = None
+        self.build_lib = None
+        self.build_temp = None
 
     def finalize_options(self):
         self.set_undefined_options('clean',
-            ('pgo_build_lib', 'pgo_build_lib'),
-            ('pgo_build_temp', 'pgo_build_temp')
+            ('pgo_build_lib', 'build_lib'),
+            ('pgo_build_temp', 'build_temp')
         )
 
     def run(self):
         try:
-            remove_tree(self.pgo_build_lib, dry_run=self.dry_run)
+            remove_tree(self.build_lib, dry_run=self.dry_run)
         except FileNotFoundError:
             pass
         try:
-            remove_tree(self.pgo_build_temp, dry_run=self.dry_run)
+            remove_tree(self.build_temp, dry_run=self.dry_run)
         except FileNotFoundError:
             pass
 

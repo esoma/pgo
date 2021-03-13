@@ -17,7 +17,7 @@ def make_clean(base_class):
 
     class clean(base_class):
 
-        user_options = tuple(base_class.user_options) + PGO_BUILD_USER_OPTIONS
+        user_options = [*base_class.user_options, *PGO_BUILD_USER_OPTIONS]
 
         def initialize_options(self):
             super().initialize_options()
