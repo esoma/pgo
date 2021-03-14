@@ -104,7 +104,15 @@ def make_build_ext_profile_generate(base_class):
             )
             super().finalize_options()
             
+            
         def build_extension(self, ext):
+            if ext.name in self.distribution.pgo.get("ignore_extensions", []):
+                super().build_extension(ext)
+            else:
+                self.build_extension_with_pgo(ext)
+
+            
+        def build_extension_with_pgo(self, ext):
             ext = deepcopy(ext)
             if is_msvc(self.compiler):
                 # since we're profiling in a different directory than we're

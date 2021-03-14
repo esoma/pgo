@@ -86,12 +86,21 @@ def make_build_ext_profile_use(base_class):
             )
             super().finalize_options()
             
+            
         def build_extension(self, ext):
+            if ext.name in self.distribution.pgo.get("ignore_extensions", []):
+                super().build_extension(ext)
+            else:
+                self.build_extension_with_pgo(ext)
+                
+
+        def build_extension_with_pgo(self, ext):
             ext = deepcopy(ext)
             if is_msvc(self.compiler):
-                # since we're building in a different directory than we profiled
-                # from we need to direct the compiler to the "pgd" (and adjacent
-                # "pgc" files) that we created in the pgo_build_lib directory
+                # since we're building in a different directory than we
+                # profiled from we need to direct the compiler to the "pgd"
+                # (and adjacent "pgc" files) that we created in the
+                # pgo_build_lib directory
                 ext_path = self.get_ext_fullpath(ext.name)
                 pgd = _get_pgd(
                     os.path.relpath(ext_path, self.build_lib),
