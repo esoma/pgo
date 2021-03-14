@@ -215,4 +215,5 @@ def test_dry_run(argv, distribution, pgo_lib_dir, pgo_temp_dir):
     ])
     distribution.parse_command_line()
     distribution.run_commands()
-    
+    assert not os.listdir(pgo_lib_dir)
+    assert not os.listdir(pgo_temp_dir)
