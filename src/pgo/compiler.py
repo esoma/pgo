@@ -26,7 +26,11 @@ def is_clang(compiler):
         compiler = new_compiler(compiler=compiler)
     if isinstance(compiler, UnixCCompiler):
         cc = compiler.compiler[0]
-        out = subprocess.run([cc], capture_output=True)
+        out = subprocess.run(
+            [cc],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         return out.stderr.startswith(b'clang:')
     return False
     
