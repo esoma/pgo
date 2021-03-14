@@ -225,7 +225,6 @@ def test_run_pythonpath_env_outer_has_values(argv, pgo_lib_dir, pgo_temp_dir):
             
 def test_run_error(argv, pgo_lib_dir):
     argv.extend(['profile'])
-    file_name = os.path.join(pgo_lib_dir, 'var')
     distribution = Distribution({ "pgo": { "profile_command": [
         sys.executable, '-c', textwrap.dedent(f"""
             import sys
@@ -239,7 +238,6 @@ def test_run_error(argv, pgo_lib_dir):
 
 def test_run_not_a_command(argv, pgo_lib_dir):
     argv.extend(['profile'])
-    file_name = os.path.join(pgo_lib_dir, 'var')
     distribution = Distribution({ "pgo": { "profile_command": [
         os.path.join(pgo_lib_dir, 'invalid')
     ]}})
@@ -250,7 +248,6 @@ def test_run_not_a_command(argv, pgo_lib_dir):
         
 def test_dry_run(argv, pgo_lib_dir):
     argv.extend(['--dry-run', 'profile'])
-    file_name = os.path.join(pgo_lib_dir, 'var')
     distribution = Distribution({ "pgo": { "profile_command": [
         sys.executable, '-c', textwrap.dedent(f"""
             import sys
@@ -259,3 +256,81 @@ def test_dry_run(argv, pgo_lib_dir):
     ]}})
     distribution.parse_command_line()
     distribution.run_commands()
+    
+    
+@pytest.mark.skipif('MSC' not in sys.version, reason='not built with msvc')
+def test_run_msvc(argv, extension, pgo_lib_dir, pgo_temp_dir):
+    argv.extend([
+        'build_ext_profile_generate',
+        '--build-lib', pgo_lib_dir,
+        '--build-temp', pgo_temp_dir,
+        'profile',
+        '--build-lib', pgo_lib_dir,
+        '--build-temp', pgo_temp_dir,
+    ])
+    distribution = Distribution({
+        "ext_modules": [extension],
+        "pgo": { "profile_command": [
+            sys.executable, '-c', 'import _pgo_test'
+        ]}
+    })
+    distribution.parse_command_line()
+    distribution.run_commands()
+    # there should be a pgd file in the build directory
+    build_files = os.listdir(pgo_lib_dir)
+    assert [
+        f for f in build_files
+        if f.startswith('_pgo_test')
+        if f.endswith('.pyd.pgd')
+    ]
+    
+    
+@pytest.mark.skipif('GCC' not in sys.version, reason='not built with gcc')
+def test_run_gcc(argv, extension, pgo_lib_dir, pgo_temp_dir):
+    argv.extend([
+        'build_ext_profile_generate',
+        '--build-lib', pgo_lib_dir,
+        '--build-temp', pgo_temp_dir,
+        'profile',
+        '--build-lib', pgo_lib_dir,
+        '--build-temp', pgo_temp_dir,
+    ])
+    distribution = Distribution({
+        "ext_modules": [extension],
+        "pgo": { "profile_command": [
+            sys.executable, '-c', 'import _pgo_test'
+        ]}
+    })
+    distribution.parse_command_line()
+    distribution.run_commands()
+    # there should be a _pgo_test.gcda file in the temp directory
+    temp_files = [
+        file
+        for root, _, files in os.walk(pgo_temp_dir)
+        for file in files
+    ]
+    assert '_pgo_test.gcda' in temp_files
+    
+    
+@pytest.mark.skipif('Clang' not in sys.version, reason='not built with clang')
+def test_run_clang(argv, extension, pgo_lib_dir, pgo_temp_dir):
+    argv.extend([
+        'build_ext_profile_generate',
+        '--build-lib', pgo_lib_dir,
+        '--build-temp', pgo_temp_dir,
+        'profile',
+        '--build-lib', pgo_lib_dir,
+        '--build-temp', pgo_temp_dir,
+    ])
+    distribution = Distribution({
+        "ext_modules": [extension],
+        "pgo": { "profile_command": [
+            sys.executable, '-c', 'import _pgo_test'
+        ]}
+    })
+    distribution.parse_command_line()
+    distribution.run_commands()
+    # there should be a .pgo-profdata-_pgo_test directory in the temp directory
+    temp_files = os.listdir(pgo_temp_dir)
+    assert '.pgo-profdata-_pgo_test' in temp_files
+
