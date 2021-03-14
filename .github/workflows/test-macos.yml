@@ -31,13 +31,14 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install --upgrade setuptools
         python -m pip install .[test]
+        
+        
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
 
     - name: Test
       run: |
         python3 -m pytest --cov=pgo --cov-report=xml
-        
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
 
     - name: Codecov
       uses: codecov/codecov-action@v1.2.1
