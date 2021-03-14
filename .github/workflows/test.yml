@@ -25,15 +25,6 @@ jobs:
             
           - os: macos-latest
             python-arch: x86
-            
-        include:
-          - os: ubuntu-latest
-            python-version: pypy-3.6
-            python-arch: x86
-
-          - os: ubuntu-latest
-            python-version: pypy-3.7
-            python-arch: x86
 
     steps:
     - uses: actions/checkout@v2
