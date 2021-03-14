@@ -6,10 +6,13 @@ __all__ = [
 
 # pgo
 from .command import PGO_BUILD_USER_OPTIONS
-from .compiler import is_clang, is_msvc, _get_pgd
+from .compiler import (is_clang, is_msvc, _get_pgd, _get_profdata,
+                       _get_profdata_dir)
 # python
 from copy import deepcopy
 import os
+import subprocess
+import sys
 # setuptools
 from distutils.errors import CompileError, DistutilsExecError, LinkError
 try:
@@ -96,8 +99,43 @@ def make_build_ext_profile_use(base_class):
                 )
                 ext.extra_link_args.append(f'/USEPROFILE:PGD={pgd}')
             elif is_clang(self.compiler):
-                ext.extra_compile_args.extend(['-fprofile-use'])
-                ext.extra_link_args.extend(['-fprofile-use'])
+                # we need to combine the ".profraw" files that clang generates
+                # into a ".profdata" file
+                profdata_dir = _get_profdata_dir(ext, self.build_temp)
+                ext_path = self.get_ext_fullpath(ext.name)
+                profdata = _get_profdata(
+                    os.path.relpath(ext_path, self.build_lib),
+                    self.pgo_build_lib
+                )
+                if not self.dry_run:
+                    # all the ".profraw" files for this extension should be in
+                    # the profdata_dir that we specified in the generate step
+                    try:
+                        profraws = [
+                            os.path.join(profdata_dir, raw)
+                            for raw in os.listdir(profdata_dir)
+                            if raw.endswith('.profraw')
+                        ]
+                    except FileNotFoundError as ex:
+                        raise ProfileError(ex)
+                    # llvm-profdata will merge our ".profraw" data into the
+                    # correct ".profdata" file we need
+                    llvm_profdata_merge = [
+                        'llvm-profdata', 'merge',
+                        f'-output={profdata}',
+                        *profraws
+                    ]
+                    if sys.platform == 'darwin':
+                        # on macs the llvm-profdata command isn't normally on
+                        # the path, so run it through xcrun
+                        llvm_profdata_merge.insert(0, 'xcrun')
+                    try:
+                        subprocess.run(llvm_profdata_merge, check=True)
+                    except subprocess.CalledProcessError as ex:
+                        raise ProfileError(ex)
+                profile_use_flag = f'-fprofile-use={profdata}'
+                ext.extra_compile_args.append(profile_use_flag)
+                ext.extra_link_args.append(profile_use_flag)
             else:
                 ext.extra_compile_args.extend([
                     '-fprofile-use',

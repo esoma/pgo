@@ -1,5 +1,5 @@
 
-__all__ = ['is_msvc']
+__all__ = ['is_clang', 'is_msvc']
 
 # python
 import os
@@ -34,6 +34,13 @@ def is_clang(compiler):
 def _get_pgd(rel_ext_path, pgo_build_lib):
     return os.path.join(pgo_build_lib, f'{rel_ext_path}.pgd')
     
+    
+def _get_profdata(rel_ext_path, pgo_build_lib):
+    return os.path.join(pgo_build_lib, f'{rel_ext_path}.profdata')
+    
+    
+def _get_profdata_dir(extension, pgo_build_temp):
+    return os.path.join(pgo_build_temp, f'.pgo-profdata-{extension.name}')
 
 
 def _get_pgort_dll():

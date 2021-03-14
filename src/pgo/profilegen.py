@@ -8,7 +8,8 @@ __all__ = [
 
 # pgo
 from .command import PGO_BUILD_USER_OPTIONS
-from .compiler import is_msvc, _get_pgd, _get_pgort_dll
+from .compiler import (is_clang, is_msvc, _get_pgd, _get_pgort_dll,
+                       _get_profdata_dir)
 # python
 from copy import deepcopy
 import os
@@ -132,6 +133,16 @@ def make_build_ext_profile_generate(base_class):
                     ),
                     dry_run=self.dry_run
                 )
+            elif is_clang(self.compiler):
+                # clang generates ".profraw" files that then need to be 
+                # combined into a single ".profdata" file later, so we specify
+                # a unique directory to dump these ".profraw" files per
+                # extension so that they can be recombined later in the use
+                # step
+                profdata_dir = _get_profdata_dir(ext, self.build_temp)
+                profile_generate_flag = f'-fprofile-generate={profdata_dir}'
+                ext.extra_compile_args.append(profile_generate_flag)
+                ext.extra_link_args.append(profile_generate_flag)
             else:
                 ext.extra_compile_args.append('-fprofile-generate')
                 ext.extra_link_args.append('-fprofile-generate')

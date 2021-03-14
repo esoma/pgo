@@ -192,18 +192,17 @@ def test_run(argv, extension, pgo_lib_dir, pgo_temp_dir, lib_dir, temp_dir):
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(lib_dir)
-    print(lib_contents)
     # the c-extension is in the build dir
     assert [
         f for f in lib_contents
         if f.startswith(extension.name)
         if f.endswith('.so')
     ]
-    # the gcda file is not in the build dir
+    # the gcda (gcc) and profdata (clang) files are not in the build dir
     assert not [
         f for f in lib_contents
         if f.startswith(extension.name)
-        if f.endswith('.gcda')
+        if f.endswith('.gcda') or f.endswith('.profdata')
     ]
     
 
