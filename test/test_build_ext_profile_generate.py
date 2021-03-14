@@ -150,6 +150,24 @@ def test_run(argv, distribution, pgo_lib_dir, pgo_temp_dir, extension):
         if f.startswith(extension.name)
         if f.endswith('.pyd.pgd')
     ]
+    
+    
+@pytest.mark.skipif('MSC' in sys.version, reason='built with msvc')
+def test_run(argv, distribution, pgo_lib_dir, pgo_temp_dir, extension):
+    argv.extend([
+        'build_ext_profile_generate',
+        '--build-lib', pgo_lib_dir,
+        '--build-temp', pgo_temp_dir,
+    ])
+    distribution.parse_command_line()
+    distribution.run_commands()
+    lib_contents = os.listdir(pgo_lib_dir)
+    # the c-extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(extension.name)
+        if f.endswith('.so')
+    ]
 
 
 def test_dry_run(argv, distribution, pgo_lib_dir, pgo_temp_dir, extension):
