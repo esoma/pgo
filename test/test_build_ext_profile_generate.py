@@ -128,8 +128,8 @@ def test_set_build_dirs_through_build(argv, distribution):
     assert build_temp == '.pgo-temp'
 
     
-@pytest.mark.skipif('MSC' not in sys.version, reason='not built with msvc')
-def test_run(argv, distribution, pgo_lib_dir, pgo_temp_dir, extension):
+@pytest.mark.skipif(sys.platform != 'win32', reason='not windows')
+def test_run_windows(argv, distribution, pgo_lib_dir, pgo_temp_dir, extension):
     argv.extend([
         'build_ext_profile_generate',
         '--build-lib', pgo_lib_dir,
@@ -152,8 +152,11 @@ def test_run(argv, distribution, pgo_lib_dir, pgo_temp_dir, extension):
     ]
     
     
-@pytest.mark.skipif('MSC' in sys.version, reason='built with msvc')
-def test_run(argv, distribution, pgo_lib_dir, pgo_temp_dir, extension):
+@pytest.mark.skipif(sys.platform == 'win32', reason='windows')
+def test_run_not_windows(
+    argv, distribution, extension,
+    pgo_lib_dir, pgo_temp_dir
+):
     argv.extend([
         'build_ext_profile_generate',
         '--build-lib', pgo_lib_dir,

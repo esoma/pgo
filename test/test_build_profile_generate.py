@@ -94,8 +94,7 @@ def test_set_build_dirs_through_build(argv, extension):
     assert cmd.build_lib == '.pgo-build'
     assert cmd.build_temp == '.pgo-temp'
     
-    
-@pytest.mark.skipif('MSC' not in sys.version, reason='not built with msvc')
+
 def test_run(
         argv, extension,
         pgo_lib_dir, pgo_temp_dir,
@@ -129,14 +128,16 @@ def test_run(
     assert [
         f for f in lib_contents
         if f.startswith(extension.name)
-        if f.endswith('.pyd')
+        if f.endswith('.pyd') or f.endswith('.so')
     ]
-    # the pgd file is in the build dir
-    assert [
-        f for f in lib_contents
-        if f.startswith(extension.name)
-        if f.endswith('.pyd.pgd')
-    ]
+    # the pgd file is in the build dir on windows, other platforms don't
+    # generate anything until actually profiling
+    if sys.platform == 'win32':
+        assert [
+            f for f in lib_contents
+            if f.startswith(extension.name)
+            if f.endswith('.pyd.pgd')
+        ]
 
 
 def test_dry_run(
