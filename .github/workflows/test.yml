@@ -22,8 +22,14 @@ jobs:
         exclude:
           - os: ubuntu-latest
             python-arch: x86
+            
           - os: macos-latest
             python-arch: x86
+            
+        include:
+          - os: ubuntu-latest
+            python-version: [pypy-3.6, pypy-3.7]
+            python-arch: x64
 
     steps:
     - uses: actions/checkout@v2
@@ -42,7 +48,7 @@ jobs:
 
     - name: Test
       run: |
-        python3 -m pytest --cov=pgo --cov-report=xml
+        python -m pytest --cov=pgo --cov-report=xml
 
     - name: Codecov
       uses: codecov/codecov-action@v1.2.1
