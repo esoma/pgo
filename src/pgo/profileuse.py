@@ -57,12 +57,6 @@ def make_build_profile_use(base_class):
                     command = command_profile_generate
                 commands.append(command)
             return commands
-            
-        def run_command(self, cmd_name):
-            if cmd_name.endswith('_profile_use') and self.__dirty:
-                command = self.distribution.get_command_obj(cmd_name)
-                command.force = True
-            super().run_command(cmd_name)
 
     return build_profile_use
 
@@ -82,10 +76,10 @@ def make_build_ext_profile_use(base_class):
         def finalize_options(self):
             self.set_undefined_options('build_profile_use',
                 ('pgo_build_lib', 'pgo_build_lib'),
-                ('pgo_build_temp', 'build_temp')
+                ('pgo_build_temp', 'build_temp'),
+                ('build_lib', 'build_lib'),
             )
             super().finalize_options()
-            
             
         def build_extension(self, ext):
             if ext.name in self.distribution.pgo.get("ignore_extensions", []):
