@@ -13,10 +13,13 @@ from setuptools import Distribution
 
 
 @pytest.fixture
-def distribution(extension):
+def distribution(extension, extension2):
     return Distribution({
-        "ext_modules": [extension],
-        "pgo": { "profile_command": [] }
+        "ext_modules": [extension, extension2],
+        "pgo": {
+            "ignore_extensions": [extension2.name],
+            "profile_command": [],
+        }
     })
     
 
@@ -129,7 +132,10 @@ def test_set_build_dirs_through_build(argv, distribution):
 
     
 @pytest.mark.skipif(sys.platform != 'win32', reason='not windows')
-def test_run_windows(argv, distribution, pgo_lib_dir, pgo_temp_dir, extension):
+def test_run_windows(
+    argv, distribution, extension, extension2,
+    pgo_lib_dir, pgo_temp_dir
+):
     argv.extend([
         'build_ext_profile_generate',
         '--build-lib', pgo_lib_dir,
@@ -138,10 +144,16 @@ def test_run_windows(argv, distribution, pgo_lib_dir, pgo_temp_dir, extension):
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(pgo_lib_dir)
-    # the c-extension is in the build dir
+    # extension is in the build dir
     assert [
         f for f in lib_contents
         if f.startswith(extension.name)
+        if f.endswith('.pyd')
+    ]
+    # extension2 is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(extension2.name)
         if f.endswith('.pyd')
     ]
     # the pgd file is in the build dir
@@ -154,7 +166,7 @@ def test_run_windows(argv, distribution, pgo_lib_dir, pgo_temp_dir, extension):
     
 @pytest.mark.skipif(sys.platform == 'win32', reason='windows')
 def test_run_not_windows(
-    argv, distribution, extension,
+    argv, distribution, extension, extension2,
     pgo_lib_dir, pgo_temp_dir
 ):
     argv.extend([
@@ -165,10 +177,16 @@ def test_run_not_windows(
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(pgo_lib_dir)
-    # the c-extension is in the build dir
+    # extension is in the build dir
     assert [
         f for f in lib_contents
         if f.startswith(extension.name)
+        if f.endswith('.so')
+    ]
+    # extension2 is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(extension2.name)
         if f.endswith('.so')
     ]
 

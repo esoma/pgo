@@ -21,6 +21,15 @@ def extension():
         language='c'
     )
     
+
+@pytest.fixture
+def extension2():
+    return Extension(
+        '_pgo_test2',
+        sources=[str(TEST_DIR / 'src/_pgo_test2.c')],
+        language='c'
+    )
+    
     
 @pytest.fixture
 def py_modules():

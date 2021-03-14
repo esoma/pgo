@@ -96,7 +96,7 @@ def test_set_build_dirs_through_build(argv, extension):
     
 
 def test_run(
-        argv, extension,
+        argv, extension, extension2,
         pgo_lib_dir, pgo_temp_dir,
         py_modules,
         packages, package_dir, script_name
@@ -107,8 +107,11 @@ def test_run(
         '--build-temp', pgo_temp_dir,
     ])
     distribution = Distribution({
-        "ext_modules": [extension],
-        "pgo": { "profile_command": [] },
+        "ext_modules": [extension, extension2],
+        "pgo": {
+            "ignore_extensions": [extension2.name],
+            "profile_command": []
+        },
         "py_modules": py_modules,
         "packages": packages,
         "package_dir": package_dir,
@@ -124,18 +127,32 @@ def test_run(
     for package in packages:
         assert package in lib_contents
         assert '__init__.py' in os.listdir(os.path.join(pgo_lib_dir, package))
-    # the c-extension is in the build dir
+    # extension is in the build dir
     assert [
         f for f in lib_contents
         if f.startswith(extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # extension2 is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(extension2.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
     # the pgd file is in the build dir on windows, other platforms don't
     # generate anything until actually profiling
+    #
+    # only the extension pgd should be generated, not extension2, since it was
+    # ignored
     if sys.platform == 'win32':
         assert [
             f for f in lib_contents
             if f.startswith(extension.name)
+            if f.endswith('.pyd.pgd')
+        ]
+        assert not [
+            f for f in lib_contents
+            if f.startswith(extension2.name)
             if f.endswith('.pyd.pgd')
         ]
 

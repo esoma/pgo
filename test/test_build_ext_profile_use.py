@@ -136,8 +136,12 @@ def test_run_no_profile_data(
         distribution.run_commands()
         
         
-@pytest.mark.skipif('MSC' not in sys.version, reason='not built with msvc')
-def test_run(argv, extension, pgo_lib_dir, pgo_temp_dir, lib_dir, temp_dir):
+@pytest.mark.skipif(sys.platform != 'win32', reason='not windows')
+def test_run_windows(
+    argv, extension, extension2,
+    pgo_lib_dir, pgo_temp_dir,
+    lib_dir, temp_dir
+):
     argv.extend([
         'build_ext_profile_generate',
         '--build-lib', pgo_lib_dir,
@@ -151,28 +155,40 @@ def test_run(argv, extension, pgo_lib_dir, pgo_temp_dir, lib_dir, temp_dir):
         '--build-temp', temp_dir,
     ])
     distribution = Distribution({
-        "ext_modules": [extension],
-        "pgo": { "profile_command": [sys.executable, '-c', 'import _pgo_test']}
+        "ext_modules": [extension, extension2],
+        "pgo": {
+            "ignore_extensions": [extension2.name],
+            "profile_command": [sys.executable, '-c', 'import _pgo_test'],
+        }
     })
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(lib_dir)
-    # the c-extension is in the build dir
+    # extension is in the build dir
     assert [
         f for f in lib_contents
         if f.startswith(extension.name)
         if f.endswith('.pyd')
     ]
-    # the pgd file is not in the build dir
+    # extension2 is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(extension2.name)
+        if f.endswith('.pyd')
+    ]
+    # no pgd file is in the build dir
     assert not [
         f for f in lib_contents
-        if f.startswith(extension.name)
         if f.endswith('.pyd.pgd')
     ]
     
     
-@pytest.mark.skipif('MSC' in sys.version, reason='built with msvc')
-def test_run(argv, extension, pgo_lib_dir, pgo_temp_dir, lib_dir, temp_dir):
+@pytest.mark.skipif(sys.platform == 'win32', reason='windows')
+def test_run_not_windows(
+    argv, extension, extension2,
+    pgo_lib_dir, pgo_temp_dir,
+    lib_dir, temp_dir
+):
     argv.extend([
         'build_ext_profile_generate',
         '--build-lib', pgo_lib_dir,
@@ -186,22 +202,30 @@ def test_run(argv, extension, pgo_lib_dir, pgo_temp_dir, lib_dir, temp_dir):
         '--build-temp', pgo_temp_dir,
     ])
     distribution = Distribution({
-        "ext_modules": [extension],
-        "pgo": { "profile_command": [sys.executable, '-c', 'import _pgo_test']}
+        "ext_modules": [extension, extension2],
+        "pgo": {
+            "ignore_extensions": [extension2.name],
+            "profile_command": [sys.executable, '-c', 'import _pgo_test'],
+        }
     })
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(lib_dir)
-    # the c-extension is in the build dir
+    # extension is in the build dir
     assert [
         f for f in lib_contents
         if f.startswith(extension.name)
         if f.endswith('.so')
     ]
+    # extension2 is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(extension2.name)
+        if f.endswith('.so')
+    ]
     # the gcda (gcc) and profdata (clang) files are not in the build dir
     assert not [
         f for f in lib_contents
-        if f.startswith(extension.name)
         if f.endswith('.gcda') or f.endswith('.profdata')
     ]
     
