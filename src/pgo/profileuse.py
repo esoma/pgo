@@ -6,7 +6,7 @@ __all__ = [
 
 # pgo
 from .command import PGO_BUILD_USER_OPTIONS
-from .compiler import is_msvc, _get_pgd
+from .compiler import is_clang, is_msvc, _get_pgd
 # python
 from copy import deepcopy
 import os
@@ -95,6 +95,9 @@ def make_build_ext_profile_use(base_class):
                     self.pgo_build_lib
                 )
                 ext.extra_link_args.append(f'/USEPROFILE:PGD={pgd}')
+            elif is_clang(self.compiler):
+                ext.extra_compile_args.extend(['-fprofile-use'])
+                ext.extra_link_args.extend(['-fprofile-use'])
             else:
                 ext.extra_compile_args.extend([
                     '-fprofile-use',
