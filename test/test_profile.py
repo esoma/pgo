@@ -258,7 +258,7 @@ def test_dry_run(argv, pgo_lib_dir):
     distribution.run_commands()
     
     
-@pytest.mark.skipif(sys.platform == 'win32', reason='not windows')
+@pytest.mark.skipif(sys.platform != 'win32', reason='not windows')
 def test_run_msvc(argv, extension, pgo_lib_dir, pgo_temp_dir):
     argv.extend([
         'build_ext_profile_generate',
@@ -285,7 +285,7 @@ def test_run_msvc(argv, extension, pgo_lib_dir, pgo_temp_dir):
     ]
     
     
-@pytest.mark.skipif(sys.platform == 'linux', reason='not linux')
+@pytest.mark.skipif(sys.platform != 'linux', reason='not linux')
 def test_run_gcc(argv, extension, pgo_lib_dir, pgo_temp_dir):
     argv.extend([
         'build_ext_profile_generate',
@@ -312,7 +312,7 @@ def test_run_gcc(argv, extension, pgo_lib_dir, pgo_temp_dir):
     assert '_pgo_test.gcda' in temp_files
     
     
-@pytest.mark.skipif(sys.platform == 'darwin', reason='not macos')
+@pytest.mark.skipif(sys.platform != 'darwin', reason='not macos')
 def test_run_clang(argv, extension, pgo_lib_dir, pgo_temp_dir):
     argv.extend([
         'build_ext_profile_generate',
