@@ -15,6 +15,7 @@ from copy import deepcopy
 import os
 # setuptools
 from distutils.dir_util import mkpath, remove_tree
+from distutils.errors import DistutilsExecError
 from distutils.file_util import copy_file
 from setuptools import Command
 try:
@@ -75,7 +76,7 @@ def make_build_profile_generate(base_class):
         def finalize_options(self):
             self.set_undefined_options('build',
                 ('pgo_build_lib', 'build_lib'),
-                ('pgo_build_temp', 'build_temp')
+                ('pgo_build_temp', 'build_temp'),
             )
             super().finalize_options()
 

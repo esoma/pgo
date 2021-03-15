@@ -11,6 +11,7 @@ from .compiler import (is_clang, is_msvc, _get_pgd, _get_profdata,
 # python
 from copy import deepcopy
 import os
+import re
 import subprocess
 import sys
 # setuptools
@@ -43,11 +44,13 @@ def make_build_profile_use(base_class):
             self.pgo_build_temp = None
 
         def finalize_options(self):
-            super().finalize_options()
             self.set_undefined_options('build',
                 ('pgo_build_lib', 'pgo_build_lib'),
-                ('pgo_build_temp', 'pgo_build_temp')
+                ('pgo_build_temp', 'pgo_build_temp'),
+                ('build_lib', 'build_lib'),
+                ('build_temp', 'build_temp'),
             )
+            super().finalize_options()
 
         def get_sub_commands(self):
             commands = []
@@ -80,7 +83,7 @@ def make_build_ext_profile_use(base_class):
                 ('build_lib', 'build_lib'),
             )
             super().finalize_options()
-            
+
         def build_extension(self, ext):
             if ext.name in self.distribution.pgo.get("ignore_extensions", []):
                 super().build_extension(ext)
@@ -101,6 +104,28 @@ def make_build_ext_profile_use(base_class):
                     self.pgo_build_lib
                 )
                 ext.extra_link_args.append(f'/USEPROFILE:PGD={pgd}')
+                # the msvc linker will produce a warning if there are no pgc
+                # files (the actual profiling data) for a given pgd, but there
+                # is no way to turn that into an error, so we'll need to search
+                # ourselves to make sure they exist
+                if not self.dry_run:
+                    pgd_dirname = os.path.dirname(pgd)
+                    pgd_name = os.path.splitext(os.path.basename(pgd))[0]
+                    pgc_pattern = re.compile(
+                        '^' + re.escape(pgd_name) + r'\!\d+\.pgc$'
+                    )
+                    try:
+                        pgd_dir_files = os.listdir(pgd_dirname)
+                    except FileNotFoundError:
+                        pgd_dir_files = []
+                    for file in pgd_dir_files:
+                        if pgc_pattern.match(file):
+                            break
+                    else:
+                        raise ProfileError(
+                            f'No .PCG matching "{pgd_name}!*.pgc" in '
+                            f'{pgd_dirname}'
+                        )
             elif is_clang(self.compiler):
                 # we need to combine the ".profraw" files that clang generates
                 # into a ".profdata" file

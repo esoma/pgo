@@ -3,10 +3,11 @@ __all__ = ['make_build']
 
 # pgo
 from .command import PGO_BUILD_USER_OPTIONS
+from .profile import ProfileError
 from .util import _dir_to_pgo_dir
 # setuptools
-from distutils.errors import (CCompilerError, DistutilsOptionError,
-                              DistutilsPlatformError)
+from distutils.errors import (CCompilerError, DistutilsExecError, 
+                              DistutilsOptionError, DistutilsPlatformError)
 try:
     from setuptools.command.build import build as _build
 except ModuleNotFoundError:
@@ -50,7 +51,12 @@ def make_build(base_class):
                 try:
                     self.run_pgo()
                     return
-                except (CCompilerError, DistutilsPlatformError) as ex:
+                except (
+                    CCompilerError,
+                    DistutilsExecError,
+                    DistutilsPlatformError,
+                    ProfileError
+                ) as ex:
                     if self.pgo_require:
                         raise
             self.run_no_pgo()

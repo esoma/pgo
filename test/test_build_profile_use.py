@@ -87,6 +87,8 @@ def test_set_build_dirs_through_build(argv, distribution):
     assert len(distribution.commands) == 2
     cmd = distribution.get_command_obj(distribution.commands[0])
     cmd.ensure_finalized()
+    assert cmd.build_lib == 'build'
+    assert cmd.build_temp == 'temp'
     assert cmd.pgo_build_lib == '.pgo-build'
     assert cmd.pgo_build_temp == '.pgo-temp'
 
