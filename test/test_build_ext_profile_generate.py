@@ -1,7 +1,7 @@
 
 # pgo
 import pgo
-from pgo import compiler
+from pgo.setuptools import compiler
 # pytest
 import pytest
 # python
