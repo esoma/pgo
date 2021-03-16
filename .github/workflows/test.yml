@@ -3,9 +3,9 @@ name: test
 
 on:
   push:
-    branches: [ main ]
+    branches: [ macostest ]
   pull_request:
-    branches: [ main ]
+    branches: [ macostest ]
 
 jobs:
   build:
@@ -15,21 +15,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [pypy-3.6, 3.6, pypy-3.7, 3.7, 3.8, 3.9, 3.10-dev]
-        python-arch: [x86, x64]
-        
-        exclude:
-          - os: ubuntu-latest
-            python-arch: x86
-            
-          - os: macos-latest
-            python-arch: x86
+        os: [macos-latest]
+        python-version: [3.9]
+        python-arch: [x64]
 
     steps:
     - uses: actions/checkout@v2
     
-    - name: Set up Python ${{ matrix.python-version }}-${{ matrix.python-arch }}
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
@@ -40,6 +33,12 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install --upgrade setuptools
         python -m pip install .[test]
+        
+        
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
 
     - name: Test
       run: |
