@@ -136,6 +136,24 @@ def test_run_no_profile_data(
         distribution.run_commands()
         
         
+def test_run_no_profile_data_dir_does_not_exist(
+    argv, distribution,
+    pgo_lib_dir, pgo_temp_dir,
+    lib_dir, temp_dir
+):
+    os.rmdir(pgo_lib_dir)
+    os.rmdir(pgo_temp_dir)
+    argv.extend([
+        'build_ext_profile_use',
+        '--pgo-build-lib', pgo_lib_dir,
+        '--build-lib', lib_dir,
+        '--build-temp', temp_dir,
+    ])
+    distribution.parse_command_line()
+    with pytest.raises(ProfileError):
+        distribution.run_commands()
+        
+        
 @pytest.mark.skipif(sys.platform != 'win32', reason='not windows')
 def test_run_windows(
     argv, extension, extension2,
