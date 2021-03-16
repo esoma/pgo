@@ -44,7 +44,10 @@ def cython_extension():
         os.remove(str(TEST_DIR / 'src/_pgo_test_cython.c'))
     except FileNotFoundError:
         pass
-    return cythonize(str(TEST_DIR / 'src/_pgo_test_cython.pyx'))[0]
+    return cythonize(
+        str(TEST_DIR / 'src/_pgo_test_cython.pyx'),
+        language_level='3',
+    )[0]
     
     
 @pytest.fixture
