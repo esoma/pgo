@@ -8,6 +8,7 @@ __all__ = [
 from .command import PGO_BUILD_USER_OPTIONS
 from .compiler import (is_clang, is_msvc, _get_pgd, _get_profdata,
                        _get_profdata_dir)
+from .util import _dir_to_pgo_dir
 # python
 from copy import deepcopy
 import os
@@ -44,6 +45,10 @@ def make_build_profile_use(base_class):
             self.pgo_build_temp = None
 
         def finalize_options(self):
+            if self.pgo_build_lib is None and self.build_lib is not None:
+                self.pgo_build_lib = _dir_to_pgo_dir(self.build_lib)
+            if self.pgo_build_temp is None and self.build_temp is not None:
+                self.pgo_build_temp = _dir_to_pgo_dir(self.build_temp)
             self.set_undefined_options('build',
                 ('pgo_build_lib', 'pgo_build_lib'),
                 ('pgo_build_temp', 'pgo_build_temp'),

@@ -59,6 +59,22 @@ def test_set_pgo_build_dirs(argv, distribution):
     assert cmd.pgo_build_lib == 'build'
     assert cmd.pgo_build_temp == 'temp'
     
+    
+def test_set_build_dirs(argv, distribution):
+    argv.extend([
+        'build_profile_use',
+        '--build-lib', 'build',
+        '--build-temp', 'temp',
+    ])
+    distribution.parse_command_line()
+    assert len(distribution.commands) == 1
+    cmd = distribution.get_command_obj(distribution.commands[0])
+    cmd.ensure_finalized()
+    assert cmd.build_lib == 'build'
+    assert cmd.build_temp == 'temp'
+    assert cmd.pgo_build_lib == '.pgo-build'
+    assert cmd.pgo_build_temp == '.pgo-temp'
+    
 
 def test_set_pgo_build_dirs_through_build(argv, distribution):
     argv.extend([

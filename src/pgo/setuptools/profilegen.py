@@ -15,7 +15,6 @@ from copy import deepcopy
 import os
 # setuptools
 from distutils.dir_util import mkpath, remove_tree
-from distutils.errors import DistutilsExecError
 from distutils.file_util import copy_file
 from setuptools import Command
 try:
