@@ -15,8 +15,15 @@ from setuptools import Distribution
 
 
 @pytest.fixture
-def distribution(extension, extension2):
+def distribution(
+    extension, extension2,
+    py_modules, packages, package_dir, script_name
+):
     return Distribution({
+        "py_modules": py_modules,
+        "packages": packages,
+        "package_dir": package_dir,
+        "script_name": script_name,
         "ext_modules": [extension, extension2],
         "pgo": {
             "ignore_extensions": [extension2.name],
@@ -138,7 +145,8 @@ def test_run_no_profile_data_pgo_required(
 def test_run_no_profile_data_pgo_not_required(
     argv, extension,
     pgo_lib_dir, pgo_temp_dir,
-    lib_dir, temp_dir
+    lib_dir, temp_dir,
+    py_modules, packages, package_dir, script_name
 ):
     argv.extend([
         'build',
@@ -148,6 +156,10 @@ def test_run_no_profile_data_pgo_not_required(
         '--build-temp', temp_dir,
     ])
     distribution = Distribution({
+        "py_modules": py_modules,
+        "packages": packages,
+        "package_dir": package_dir,
+        "script_name": script_name,
         "ext_modules": [extension],
         "pgo": {
             "profile_command": [
@@ -164,12 +176,20 @@ def test_run_no_profile_data_pgo_not_required(
         if f.startswith(extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # pure python modules are "built"
+    for module in py_modules:
+        assert f'{module}.py' in lib_contents
+    # pure python packages are "built"
+    for package in packages:
+        assert package in lib_contents
+        assert '__init__.py' in os.listdir(os.path.join(pgo_lib_dir, package))
     
     
 def test_run_no_profile_data_pgo_disabled(
     argv, extension,
     pgo_lib_dir, pgo_temp_dir,
-    lib_dir, temp_dir
+    lib_dir, temp_dir,
+    py_modules, packages, package_dir, script_name
 ):
     argv.extend([
         'build',
@@ -180,6 +200,10 @@ def test_run_no_profile_data_pgo_disabled(
         '--build-temp', temp_dir,
     ])
     distribution = Distribution({
+        "py_modules": py_modules,
+        "packages": packages,
+        "package_dir": package_dir,
+        "script_name": script_name,
         "ext_modules": [extension],
         "pgo": {
             "profile_command": [
@@ -196,6 +220,13 @@ def test_run_no_profile_data_pgo_disabled(
         if f.startswith(extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # pure python modules are "built"
+    for module in py_modules:
+        assert f'{module}.py' in lib_contents
+    # pure python packages are "built"
+    for package in packages:
+        assert package in lib_contents
+        assert '__init__.py' in os.listdir(os.path.join(lib_dir, package))
     
     
 @pytest.mark.parametrize("required", [True, False])
@@ -203,7 +234,8 @@ def test_run(
     argv, distribution, extension, extension2,
     required,
     pgo_lib_dir, pgo_temp_dir,
-    lib_dir, temp_dir
+    lib_dir, temp_dir,
+    py_modules, packages
 ):
     argv.extend([
         'build',
@@ -254,6 +286,13 @@ def test_run(
             for file in files
         ]
         assert '_pgo_test.gcda' in temp_files   
+    # pure python modules are "built" in the pgo build dir
+    for module in py_modules:
+        assert f'{module}.py' in lib_contents
+    # pure python packages are "built" in the pgo build dir
+    for package in packages:
+        assert package in lib_contents
+        assert '__init__.py' in os.listdir(os.path.join(pgo_lib_dir, package))
     lib_contents = os.listdir(lib_dir)
     # extension is in the build dir
     assert [
@@ -267,12 +306,20 @@ def test_run(
         if f.startswith(extension2.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # pure python modules are "built" in the build dir
+    for module in py_modules:
+        assert f'{module}.py' in lib_contents
+    # pure python packages are "built" in the build dir
+    for package in packages:
+        assert package in lib_contents
+        assert '__init__.py' in os.listdir(os.path.join(lib_dir, package))
 
     
 def test_run_pgo_disabled(
     argv, distribution, extension, extension2,
     pgo_lib_dir, pgo_temp_dir,
-    lib_dir, temp_dir
+    lib_dir, temp_dir,
+    py_modules, packages
 ):
     argv.extend([
         'build',
@@ -300,6 +347,13 @@ def test_run_pgo_disabled(
         if f.startswith(extension2.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # pure python modules are "built"
+    for module in py_modules:
+        assert f'{module}.py' in lib_contents
+    # pure python packages are "built"
+    for package in packages:
+        assert package in lib_contents
+        assert '__init__.py' in os.listdir(os.path.join(lib_dir, package))
 
 
 def test_dry_run(
