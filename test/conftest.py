@@ -1,7 +1,14 @@
 
+# make sure setuptools is imported first to make it do all its hackery with
+# distutils and cython
+import setuptools
+
+# cython
+from Cython.Build import cythonize
 # pytest
 import pytest
 # python
+import os
 import pathlib
 import sys
 import tempfile
@@ -29,6 +36,15 @@ def extension2():
         sources=[str(TEST_DIR / 'src/_pgo_test2.c')],
         language='c'
     )
+    
+    
+@pytest.fixture
+def cython_extension():
+    try:
+        os.remove(str(TEST_DIR / 'src/_pgo_test_cython.c'))
+    except FileNotFoundError:
+        pass
+    return cythonize(str(TEST_DIR / 'src/_pgo_test_cython.pyx'))[0]
     
     
 @pytest.fixture

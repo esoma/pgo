@@ -9,6 +9,24 @@ import sys
 # setuptools
 import distutils.errors
 from setuptools import Distribution
+
+
+@pytest.fixture
+def distribution(
+    extension, extension2, cython_extension,
+    py_modules, packages, package_dir, script_name
+):
+    return Distribution({
+        "ext_modules": [extension, extension2, cython_extension],
+        "pgo": {
+            "ignore_extensions": [extension2.name],
+            "profile_command": []
+        },
+        "py_modules": py_modules,
+        "packages": packages,
+        "package_dir": package_dir,
+        "script_name": script_name,
+    })
     
 
 @pytest.mark.parametrize('dist_kwargs', [
@@ -25,12 +43,8 @@ def test_not_available_with_no_profile_command(argv, extension, dist_kwargs):
         distribution.parse_command_line()
 
 
-def test_default_build_dirs(argv, extension):
+def test_default_build_dirs(argv, distribution):
     argv.extend(['build_profile_generate'])
-    distribution = Distribution({
-        "ext_modules": [extension],
-        "pgo": { "profile_command": [] }
-    })
     distribution.parse_command_line()
     assert len(distribution.commands) == 1
     cmd = distribution.get_command_obj(distribution.commands[0])
@@ -39,16 +53,12 @@ def test_default_build_dirs(argv, extension):
     assert os.path.basename(cmd.build_temp).startswith('.pgo-')
     
 
-def test_set_build_dirs(argv, extension):
+def test_set_build_dirs(argv, distribution):
     argv.extend([
         'build_profile_generate',
         '--build-lib', 'build',
         '--build-temp', 'temp'
     ])
-    distribution = Distribution({
-        "ext_modules": [extension],
-        "pgo": { "profile_command": [] }
-    })
     distribution.parse_command_line()
     assert len(distribution.commands) == 1
     cmd = distribution.get_command_obj(distribution.commands[0])
@@ -57,17 +67,13 @@ def test_set_build_dirs(argv, extension):
     assert cmd.build_temp == 'temp'
     
 
-def test_set_pgo_build_dirs_through_build(argv, extension):
+def test_set_pgo_build_dirs_through_build(argv, distribution):
     argv.extend([
         'build_profile_generate',
         'build',
         '--pgo-build-lib', 'build',
         '--pgo-build-temp', 'temp',
     ])
-    distribution = Distribution({
-        "ext_modules": [extension],
-        "pgo": { "profile_command": [] }
-    })
     distribution.parse_command_line()
     assert len(distribution.commands) == 2
     cmd = distribution.get_command_obj(distribution.commands[0])
@@ -76,17 +82,13 @@ def test_set_pgo_build_dirs_through_build(argv, extension):
     assert cmd.build_temp == 'temp'
     
     
-def test_set_build_dirs_through_build(argv, extension):
+def test_set_build_dirs_through_build(argv, distribution):
     argv.extend([
         'build_profile_generate',
         'build',
         '--build-lib', 'build',
         '--build-temp', 'temp',
     ])
-    distribution = Distribution({
-        "ext_modules": [extension],
-        "pgo": { "profile_command": [] }
-    })
     distribution.parse_command_line()
     assert len(distribution.commands) == 2
     cmd = distribution.get_command_obj(distribution.commands[0])
@@ -96,27 +98,16 @@ def test_set_build_dirs_through_build(argv, extension):
     
 
 def test_run(
-        argv, extension, extension2,
+        argv, distribution,
+        extension, extension2, cython_extension,
         pgo_lib_dir, pgo_temp_dir,
-        py_modules,
-        packages, package_dir, script_name
+        py_modules, packages
     ):
     argv.extend([
         'build_profile_generate',
         '--build-lib', pgo_lib_dir,
         '--build-temp', pgo_temp_dir,
     ])
-    distribution = Distribution({
-        "ext_modules": [extension, extension2],
-        "pgo": {
-            "ignore_extensions": [extension2.name],
-            "profile_command": []
-        },
-        "py_modules": py_modules,
-        "packages": packages,
-        "package_dir": package_dir,
-        "script_name": script_name,
-    })
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(pgo_lib_dir)
@@ -139,6 +130,12 @@ def test_run(
         if f.startswith(extension2.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # cython_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(cython_extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
     # the pgd file is in the build dir on windows, other platforms don't
     # generate anything until actually profiling
     #
@@ -158,25 +155,15 @@ def test_run(
 
 
 def test_dry_run(
-        argv, extension,
-        pgo_lib_dir, pgo_temp_dir,
-        py_modules,
-        packages, package_dir, script_name
-    ):
+    argv, distribution,
+    pgo_lib_dir, pgo_temp_dir,
+):
     argv.extend([
         '--dry-run',
         'build_profile_generate',
         '--build-lib', pgo_lib_dir,
         '--build-temp', pgo_temp_dir,
     ])
-    distribution = Distribution({
-        "ext_modules": [extension],
-        "pgo": { "profile_command": [] },
-        "py_modules": py_modules,
-        "packages": packages,
-        "package_dir": package_dir,
-        "script_name": script_name,
-    })
     distribution.parse_command_line()
     distribution.run_commands()
     assert not os.listdir(pgo_lib_dir)

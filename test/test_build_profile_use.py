@@ -15,12 +15,16 @@ from setuptools import Distribution
 
 
 @pytest.fixture
-def distribution(extension):
+def distribution(extension, extension2, cython_extension):
     return Distribution({
-        "ext_modules": [extension],
-        "pgo": { "profile_command": [] }
+        "ext_modules": [extension, extension2, cython_extension],
+        "pgo": {
+            "ignore_extensions": [extension2.name],
+            "profile_command": [
+                sys.executable, '-c', 'import _pgo_test; import _pgo_test_cython'
+            ]
+        }
     })
-    
 
 @pytest.mark.parametrize('dist_kwargs', [
     {},
@@ -127,7 +131,8 @@ def test_run_no_profile_data(
 
 @pytest.mark.skipif(sys.platform != 'win32', reason='not windows')
 def test_run_windows(
-    argv, extension, extension2,
+    argv, distribution,
+    extension, extension2, cython_extension,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir
 ):
@@ -144,13 +149,6 @@ def test_run_windows(
         '--build-lib', lib_dir,
         '--build-temp', temp_dir,
     ])
-    distribution = Distribution({
-        "ext_modules": [extension, extension2],
-        "pgo": {
-            "ignore_extensions": [extension2.name],
-            "profile_command": [sys.executable, '-c', 'import _pgo_test'],
-        }
-    })
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(lib_dir)
@@ -166,6 +164,12 @@ def test_run_windows(
         if f.startswith(extension2.name)
         if f.endswith('.pyd')
     ]
+    # cython_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(cython_extension.name)
+        if f.endswith('.pyd')
+    ]
     # no pgd file is not in the build dir
     assert not [
         f for f in lib_contents
@@ -174,7 +178,8 @@ def test_run_windows(
     
 @pytest.mark.skipif(sys.platform == 'win32', reason='windows')
 def test_run_not_windows(
-    argv, extension, extension2,
+    argv, distribution,
+    extension, extension2, cython_extension,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir
 ):
@@ -191,13 +196,6 @@ def test_run_not_windows(
         '--build-lib', lib_dir,
         '--build-temp', pgo_temp_dir,
     ])
-    distribution = Distribution({
-        "ext_modules": [extension, extension2],
-        "pgo": {
-            "ignore_extensions": [extension2.name],
-            "profile_command": [sys.executable, '-c', 'import _pgo_test'],
-        }
-    })
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(lib_dir)
@@ -211,6 +209,12 @@ def test_run_not_windows(
     assert [
         f for f in lib_contents
         if f.startswith(extension2.name)
+        if f.endswith('.so')
+    ]
+    # cython_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(cython_extension.name)
         if f.endswith('.so')
     ]
     # the gcda (gcc) and profdata (clang) files are not in the build dir

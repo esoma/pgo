@@ -16,7 +16,7 @@ from setuptools import Distribution
 
 @pytest.fixture
 def distribution(
-    extension, extension2,
+    extension, extension2, cython_extension,
     py_modules, packages, package_dir, script_name
 ):
     return Distribution({
@@ -24,11 +24,11 @@ def distribution(
         "packages": packages,
         "package_dir": package_dir,
         "script_name": script_name,
-        "ext_modules": [extension, extension2],
+        "ext_modules": [extension, extension2, cython_extension],
         "pgo": {
             "ignore_extensions": [extension2.name],
             "profile_command": [
-                sys.executable, '-c', 'import _pgo_test'
+                sys.executable, '-c', 'import _pgo_test; import _pgo_test_cython'
             ]
         }
     })
@@ -143,10 +143,11 @@ def test_run_no_profile_data_pgo_required(
 
 
 def test_run_no_profile_data_pgo_not_required(
-    argv, extension,
+    argv, extension, extension2, cython_extension,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir,
-    py_modules, packages, package_dir, script_name
+    distribution,
+    py_modules, packages
 ):
     argv.extend([
         'build',
@@ -155,18 +156,7 @@ def test_run_no_profile_data_pgo_not_required(
         '--build-lib', lib_dir,
         '--build-temp', temp_dir,
     ])
-    distribution = Distribution({
-        "py_modules": py_modules,
-        "packages": packages,
-        "package_dir": package_dir,
-        "script_name": script_name,
-        "ext_modules": [extension],
-        "pgo": {
-            "profile_command": [
-                sys.executable, '-c', 'pass'
-            ]
-        }
-    })
+    distribution.pgo["profile_command"] = [sys.executable, '-c', 'pass']
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(lib_dir)
@@ -174,6 +164,18 @@ def test_run_no_profile_data_pgo_not_required(
     assert [
         f for f in lib_contents
         if f.startswith(extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
+    # extension2 is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(extension2.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
+    # cython_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(cython_extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
     # pure python modules are "built"
@@ -186,10 +188,11 @@ def test_run_no_profile_data_pgo_not_required(
     
     
 def test_run_no_profile_data_pgo_disabled(
-    argv, extension,
+    argv, extension, extension2, cython_extension,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir,
-    py_modules, packages, package_dir, script_name
+    distribution,
+    py_modules, packages
 ):
     argv.extend([
         'build',
@@ -199,18 +202,7 @@ def test_run_no_profile_data_pgo_disabled(
         '--build-lib', lib_dir,
         '--build-temp', temp_dir,
     ])
-    distribution = Distribution({
-        "py_modules": py_modules,
-        "packages": packages,
-        "package_dir": package_dir,
-        "script_name": script_name,
-        "ext_modules": [extension],
-        "pgo": {
-            "profile_command": [
-                sys.executable, '-c', 'pass'
-            ]
-        }
-    })
+    distribution.pgo["profile_command"] = [sys.executable, '-c', 'pass']
     distribution.parse_command_line()
     distribution.run_commands()
     lib_contents = os.listdir(lib_dir)
@@ -218,6 +210,18 @@ def test_run_no_profile_data_pgo_disabled(
     assert [
         f for f in lib_contents
         if f.startswith(extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
+    # extension2 is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(extension2.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
+    # cython_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(cython_extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
     # pure python modules are "built"
@@ -231,7 +235,7 @@ def test_run_no_profile_data_pgo_disabled(
     
 @pytest.mark.parametrize("required", [True, False])
 def test_run(
-    argv, distribution, extension, extension2,
+    argv, distribution, extension, extension2, cython_extension,
     required,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir,
@@ -260,32 +264,52 @@ def test_run(
         if f.startswith(extension2.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # cython_extension is in the pgo build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(cython_extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
     if sys.platform == 'win32':
-        # the pgd file is in the pgo build dir
+        # the pgd file is in the pgo build dir for extension
         assert [
             f for f in lib_contents
             if f.startswith(extension.name)
             if f.endswith('.pyd.pgd')
         ]
-        # the pgc file is in the pgo build dir
+        # the pgc file is in the pgo build dir for extension
         assert [
             f for f in lib_contents
             if f.startswith(extension.name)
             if f.endswith('.pgc')
         ]
+        # the pgd file is in the pgo build dir for cython_extension
+        assert [
+            f for f in lib_contents
+            if f.startswith(cython_extension.name)
+            if f.endswith('.pyd.pgd')
+        ]
+        # the pgc file is in the pgo build dir for cython_extension
+        assert [
+            f for f in lib_contents
+            if f.startswith(cython_extension.name)
+            if f.endswith('.pgc')
+        ]
     elif sys.platform == 'darwin':
-        # there should be a .pgo-profdata-_pgo_test directory in the pgo temp
+        # there should be .pgo-profdata-{extension} directories in the pgo temp
         # directory
         temp_files = os.listdir(pgo_temp_dir)
         assert '.pgo-profdata-_pgo_test' in temp_files
+        assert '.pgo-profdata-_pgo_test_cython' in temp_files
     elif sys.platform == 'linux':
-        # there should be a _pgo_test.gcda file in the pgo temp directory
+        # there should be {extension}.gcda files in the pgo temp directory
         temp_files = [
             file
             for root, _, files in os.walk(pgo_temp_dir)
             for file in files
         ]
         assert '_pgo_test.gcda' in temp_files   
+        assert '_pgo_test_cython.gcda' in temp_files   
     # pure python modules are "built" in the pgo build dir
     for module in py_modules:
         assert f'{module}.py' in lib_contents
@@ -306,6 +330,12 @@ def test_run(
         if f.startswith(extension2.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # cython_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(cython_extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
     # pure python modules are "built" in the build dir
     for module in py_modules:
         assert f'{module}.py' in lib_contents
@@ -316,7 +346,7 @@ def test_run(
 
     
 def test_run_pgo_disabled(
-    argv, distribution, extension, extension2,
+    argv, distribution, extension, extension2, cython_extension,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir,
     py_modules, packages
@@ -347,6 +377,12 @@ def test_run_pgo_disabled(
         if f.startswith(extension2.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # cython_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(cython_extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
     # pure python modules are "built"
     for module in py_modules:
         assert f'{module}.py' in lib_contents
@@ -357,7 +393,7 @@ def test_run_pgo_disabled(
 
 
 def test_dry_run(
-    argv, distribution, extension, extension2,
+    argv, distribution,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir
 ):
