@@ -134,12 +134,9 @@ def make_build_ext_profile_use(base_class):
             elif is_clang(self.compiler):
                 # we need to combine the ".profraw" files that clang generates
                 # into a ".profdata" file
-                profdata_dir = _get_profdata_dir(ext, self.build_temp)
+                profdata_dir = _get_profdata_dir(self.build_temp)
                 ext_path = self.get_ext_fullpath(ext.name)
-                profdata = _get_profdata(
-                    os.path.relpath(ext_path, self.build_lib),
-                    self.pgo_build_lib
-                )
+                profdata = _get_profdata(self.pgo_build_lib)
                 if not self.dry_run:
                     # all the ".profraw" files for this extension should be in
                     # the profdata_dir that we specified in the generate step
