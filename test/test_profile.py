@@ -330,7 +330,7 @@ def test_run_clang(argv, extension, pgo_lib_dir, pgo_temp_dir):
     })
     distribution.parse_command_line()
     distribution.run_commands()
-    # there should be a .pgo-profdata-_pgo_test directory in the temp directory
+    # there should be a .pgo-profdatas directory in the temp directory
     temp_files = os.listdir(pgo_temp_dir)
-    assert '.pgo-profdata-_pgo_test' in temp_files
+    assert '.pgo-profdatas' in temp_files
 

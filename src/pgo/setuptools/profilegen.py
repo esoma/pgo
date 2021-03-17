@@ -147,7 +147,7 @@ def make_build_ext_profile_generate(base_class):
                 # a unique directory to dump these ".profraw" files per
                 # extension so that they can be recombined later in the use
                 # step
-                profdata_dir = _get_profdata_dir(ext, self.build_temp)
+                profdata_dir = _get_profdata_dir(self.build_temp)
                 profile_generate_flag = f'-fprofile-generate={profdata_dir}'
                 ext.extra_compile_args.append(profile_generate_flag)
                 ext.extra_link_args.append(profile_generate_flag)

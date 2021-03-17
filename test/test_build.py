@@ -296,11 +296,9 @@ def test_run(
             if f.endswith('.pgc')
         ]
     elif sys.platform == 'darwin':
-        # there should be .pgo-profdata-{extension} directories in the pgo temp
-        # directory
+        # there should be .pgo-profdatas directories in the pgo temp directory
         temp_files = os.listdir(pgo_temp_dir)
-        assert '.pgo-profdata-_pgo_test' in temp_files
-        assert '.pgo-profdata-_pgo_test_cython' in temp_files
+        assert '.pgo-profdatas' in temp_files
     elif sys.platform == 'linux':
         # there should be {extension}.gcda files in the pgo temp directory
         temp_files = [
