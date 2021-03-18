@@ -8,15 +8,9 @@ from .util import _dir_to_pgo_dir
 # setuptools
 from distutils.errors import (CCompilerError, DistutilsExecError, 
                               DistutilsOptionError, DistutilsPlatformError)
-try:
-    from setuptools.command.build import build as _build
-except ModuleNotFoundError:
-    from distutils.command.build import build as _build
 
 
 def make_build(base_class):
-    if base_class is None:
-        base_class = _build
 
     class build(base_class):
 

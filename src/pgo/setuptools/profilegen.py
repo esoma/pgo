@@ -17,12 +17,6 @@ import os
 from distutils.dir_util import mkpath, remove_tree
 from distutils.file_util import copy_file
 from setuptools import Command
-try:
-    from setuptools.command.build import build as _build
-except ModuleNotFoundError:
-    from distutils.command.build import build as _build
-from setuptools.command.build_ext import build_ext as _build_ext
-from setuptools.command.build_py import build_py as _build_py
 
 
 class clean_profile_generate(Command):
@@ -62,8 +56,6 @@ class clean_profile_generate(Command):
 
 
 def make_build_profile_generate(base_class):
-    if base_class is None:
-        base_class = _build
 
     class build_profile_generate(base_class):
 
@@ -92,8 +84,6 @@ def make_build_profile_generate(base_class):
 
 
 def make_build_ext_profile_generate(base_class):
-    if base_class is None:
-        base_class = _build_ext
 
     class build_ext_profile_generate(base_class):
     
@@ -160,8 +150,6 @@ def make_build_ext_profile_generate(base_class):
 
 
 def make_build_py_profile_generate(base_class):
-    if base_class is None:
-        base_class = _build_py
 
     class build_py_profile_generate(base_class):
 

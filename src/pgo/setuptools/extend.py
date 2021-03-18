@@ -25,10 +25,10 @@ def pgo(dist, attr, value):
         )
         return
     # patch the build command to include PGO steps
-    build = dist.cmdclass.get("build")
-    build_ext = dist.cmdclass.get("build_ext")
-    build_py = dist.cmdclass.get("build_py")
-    clean = dist.cmdclass.get("clean")
+    build = dist.get_command_class("build")
+    build_ext = dist.get_command_class("build_ext")
+    build_py = dist.get_command_class("build_py")
+    clean = dist.get_command_class("clean")
     dist.cmdclass["build_profile_generate"] = make_build_profile_generate(build)
     dist.cmdclass["build_profile_use"] = make_build_profile_use(build)
     dist.cmdclass["build_ext_profile_generate"] = make_build_ext_profile_generate(build_ext)

@@ -4,16 +4,9 @@ __all__ = ['make_clean']
 # pgo
 from .command import PGO_BUILD_USER_OPTIONS
 from .util import _dir_to_pgo_dir
-# setuptools
-try:
-    from setuptools.command.clean import clean as _clean
-except ModuleNotFoundError:
-    from distutils.command.clean import clean as _clean
     
     
 def make_clean(base_class):
-    if base_class is None:
-        base_class = _clean
 
     class clean(base_class):
 

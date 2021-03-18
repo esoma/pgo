@@ -17,11 +17,6 @@ import subprocess
 import sys
 # setuptools
 from distutils.errors import CompileError, DistutilsExecError, LinkError
-try:
-    from setuptools.command.build import build as _build
-except ModuleNotFoundError:
-    from distutils.command.build import build as _build
-from setuptools.command.build_ext import build_ext as _build_ext
 
 
 class ProfileError(DistutilsExecError):
@@ -29,8 +24,6 @@ class ProfileError(DistutilsExecError):
 
 
 def make_build_profile_use(base_class):
-    if base_class is None:
-        base_class = _build
 
     class build_profile_use(base_class):
 
@@ -70,8 +63,6 @@ def make_build_profile_use(base_class):
 
 
 def make_build_ext_profile_use(base_class):
-    if base_class is None:
-        base_class = _build_ext
 
     class build_ext_profile_use(base_class):
     
