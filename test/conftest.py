@@ -74,7 +74,6 @@ def mypyc_extension():
         target_dir = tempfile.TemporaryDirectory()
         yield mypycify(
             [str(TEST_DIR / 'src/_pgo_test_mypyc.py')],
-            target_dir=target_dir.name,
         )[0]
         target_dir.cleanup()
     
