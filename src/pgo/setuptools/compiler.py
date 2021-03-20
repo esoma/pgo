@@ -54,8 +54,8 @@ def _get_pgort_dll():
     ]).decode('utf-16le')
     path = [
         l for l in out.splitlines()
-        if l.startswith('Path=')
-    ][0][len('Path='):]
+        if l.lower().startswith('path=')
+    ][0][len('path='):]
     for path in path.split(';'):
         try:
             for file in os.listdir(path):
