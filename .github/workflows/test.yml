@@ -35,10 +35,18 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.python-arch }}
         
-    - name: Install dependencies
+    - name: Upgrade pip & setuptools
       run: |
         python -m pip install --upgrade pip
         python -m pip install --upgrade setuptools
+        
+    - name: Install mypy
+      if: matrix.os == windows-lastest && matrix.python-version == 3.6 && matrix.python-arch == 'x64'
+      run: |
+        python -m pip install --no-binary mypy
+      
+    - name: Install Test Dependencies
+      run: |
         python -m pip install .[test]
 
     - name: Test
