@@ -3,9 +3,9 @@ name: test
 
 on:
   push:
-    branches: [ main ]
+    branches: [ windows-test ]
   pull_request:
-    branches: [ main ]
+    branches: [ windows-test ]
 
 jobs:
   build:
@@ -15,8 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [pypy-3.6, 3.6, pypy-3.7, 3.7, 3.8, 3.9]
+        os: [windows-latest]
+        python-version: [3.6]
         python-arch: [x86, x64]
         
         exclude:
