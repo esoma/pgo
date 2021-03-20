@@ -5,6 +5,8 @@ import setuptools
 
 # cython
 from Cython.Build import cythonize
+# mypy
+from mypyc.build import mypycify
 # pytest
 import pytest
 # python
@@ -48,6 +50,16 @@ def cython_extension():
         str(TEST_DIR / 'src/_pgo_test_cython.pyx'),
         language_level='3',
     )[0]
+    
+    
+@pytest.fixture
+def mypyc_extension():
+    target_dir = tempfile.TemporaryDirectory()
+    yield mypycify(
+        [str(TEST_DIR / 'src/_pgo_test_mypyc.py')],
+        target_dir=target_dir.name,
+    )[0]
+    target_dir.cleanup()
     
     
 @pytest.fixture

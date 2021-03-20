@@ -13,11 +13,16 @@ from setuptools import Distribution
 
 @pytest.fixture
 def distribution(
-    extension, extension2, cython_extension,
+    extension, extension2, cython_extension, mypyc_extension,
     py_modules, packages, package_dir, script_name
 ):
     return Distribution({
-        "ext_modules": [extension, extension2, cython_extension],
+        "ext_modules": [
+            extension,
+            extension2,
+            cython_extension,
+            mypyc_extension
+        ],
         "pgo": {
             "ignore_extensions": [extension2.name],
             "profile_command": []
@@ -99,7 +104,7 @@ def test_set_build_dirs_through_build(argv, distribution):
 
 def test_run(
         argv, distribution,
-        extension, extension2, cython_extension,
+        extension, extension2, cython_extension, mypyc_extension,
         pgo_lib_dir, pgo_temp_dir,
         py_modules, packages
     ):
@@ -136,11 +141,16 @@ def test_run(
         if f.startswith(cython_extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # mypyc_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(mypyc_extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
     # the pgd file is in the build dir on windows, other platforms don't
     # generate anything until actually profiling
     #
-    # only the extension pgd should be generated, not extension2, since it was
-    # ignored
+    # only extension2 shouldn't have a pgd file because it was ignored for pgo
     if sys.platform == 'win32':
         assert [
             f for f in lib_contents
@@ -150,6 +160,16 @@ def test_run(
         assert not [
             f for f in lib_contents
             if f.startswith(extension2.name)
+            if f.endswith('.pyd.pgd')
+        ]
+        assert [
+            f for f in lib_contents
+            if f.startswith(cython_extension.name)
+            if f.endswith('.pyd.pgd')
+        ]
+        assert [
+            f for f in lib_contents
+            if f.startswith(mypyc_extension.name)
             if f.endswith('.pyd.pgd')
         ]
 

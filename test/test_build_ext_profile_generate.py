@@ -13,9 +13,14 @@ from setuptools import Distribution
 
 
 @pytest.fixture
-def distribution(extension, extension2, cython_extension):
+def distribution(extension, extension2, cython_extension, mypyc_extension):
     return Distribution({
-        "ext_modules": [extension, extension2, cython_extension],
+        "ext_modules": [
+            extension,
+            extension2,
+            cython_extension,
+            mypyc_extension
+        ],
         "pgo": {
             "ignore_extensions": [extension2.name],
             "profile_command": [],
@@ -133,7 +138,8 @@ def test_set_build_dirs_through_build(argv, distribution):
     
 @pytest.mark.skipif(sys.platform != 'win32', reason='not windows')
 def test_run_windows(
-    argv, distribution, extension, extension2, cython_extension,
+    argv, distribution,
+    extension, extension2, cython_extension, mypyc_extension,
     pgo_lib_dir, pgo_temp_dir
 ):
     argv.extend([
@@ -162,17 +168,36 @@ def test_run_windows(
         if f.startswith(cython_extension.name)
         if f.endswith('.pyd')
     ]
-    # the pgd file is in the build dir
+    # mypyc_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(mypyc_extension.name)
+        if f.endswith('.pyd')
+    ]
+    # the extension pgd file is in the build dir
     assert [
         f for f in lib_contents
         if f.startswith(extension.name)
+        if f.endswith('.pyd.pgd')
+    ]
+    # the cython_extension pgd file is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(cython_extension.name)
+        if f.endswith('.pyd.pgd')
+    ]
+    # the mypyc_extension pgd file is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(mypyc_extension.name)
         if f.endswith('.pyd.pgd')
     ]
     
     
 @pytest.mark.skipif(sys.platform == 'win32', reason='windows')
 def test_run_not_windows(
-    argv, distribution, extension, extension2, cython_extension,
+    argv, distribution,
+    extension, extension2, cython_extension, mypyc_extension,
     pgo_lib_dir, pgo_temp_dir
 ):
     argv.extend([
@@ -199,6 +224,12 @@ def test_run_not_windows(
     assert [
         f for f in lib_contents
         if f.startswith(cython_extension.name)
+        if f.endswith('.so')
+    ]
+    # mypyc_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(mypyc_extension.name)
         if f.endswith('.so')
     ]
 

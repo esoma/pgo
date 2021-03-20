@@ -16,7 +16,7 @@ from setuptools import Distribution
 
 @pytest.fixture
 def distribution(
-    extension, extension2, cython_extension,
+    extension, extension2, cython_extension, mypyc_extension,
     py_modules, packages, package_dir, script_name
 ):
     return Distribution({
@@ -24,11 +24,20 @@ def distribution(
         "packages": packages,
         "package_dir": package_dir,
         "script_name": script_name,
-        "ext_modules": [extension, extension2, cython_extension],
+        "ext_modules": [
+            extension,
+            extension2,
+            cython_extension,
+            mypyc_extension
+        ],
         "pgo": {
             "ignore_extensions": [extension2.name],
             "profile_command": [
-                sys.executable, '-c', 'import _pgo_test; import _pgo_test_cython'
+                sys.executable, '-c', textwrap.dedent("""
+                    import _pgo_test
+                    import _pgo_test_cython
+                    import _pgo_test_mypyc
+                """)
             ]
         }
     })
@@ -143,7 +152,7 @@ def test_run_no_profile_data_pgo_required(
 
 
 def test_run_no_profile_data_pgo_not_required(
-    argv, extension, extension2, cython_extension,
+    argv, extension, extension2, cython_extension, mypyc_extension,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir,
     distribution,
@@ -178,6 +187,12 @@ def test_run_no_profile_data_pgo_not_required(
         if f.startswith(cython_extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # mypyc_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(mypyc_extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
     # pure python modules are "built"
     for module in py_modules:
         assert f'{module}.py' in lib_contents
@@ -188,7 +203,7 @@ def test_run_no_profile_data_pgo_not_required(
     
     
 def test_run_no_profile_data_pgo_disabled(
-    argv, extension, extension2, cython_extension,
+    argv, extension, extension2, cython_extension, mypyc_extension,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir,
     distribution,
@@ -224,6 +239,12 @@ def test_run_no_profile_data_pgo_disabled(
         if f.startswith(cython_extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # mypyc_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(mypyc_extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
     # pure python modules are "built"
     for module in py_modules:
         assert f'{module}.py' in lib_contents
@@ -235,7 +256,8 @@ def test_run_no_profile_data_pgo_disabled(
     
 @pytest.mark.parametrize("required", [True, False])
 def test_run(
-    argv, distribution, extension, extension2, cython_extension,
+    argv, distribution,
+    extension, extension2, cython_extension, mypyc_extension,
     required,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir,
@@ -270,6 +292,12 @@ def test_run(
         if f.startswith(cython_extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # mypyc_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(mypyc_extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
     if sys.platform == 'win32':
         # the pgd file is in the pgo build dir for extension
         assert [
@@ -293,6 +321,18 @@ def test_run(
         assert [
             f for f in lib_contents
             if f.startswith(cython_extension.name)
+            if f.endswith('.pgc')
+        ]
+        # the pgd file is in the pgo build dir for mypyc_extension
+        assert [
+            f for f in lib_contents
+            if f.startswith(mypyc_extension.name)
+            if f.endswith('.pyd.pgd')
+        ]
+        # the pgc file is in the pgo build dir for mypyc_extension
+        assert [
+            f for f in lib_contents
+            if f.startswith(mypyc_extension.name)
             if f.endswith('.pgc')
         ]
     elif sys.platform == 'darwin':
@@ -334,6 +374,12 @@ def test_run(
         if f.startswith(cython_extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
+    # mypyc_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(mypyc_extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
     # pure python modules are "built" in the build dir
     for module in py_modules:
         assert f'{module}.py' in lib_contents
@@ -344,7 +390,8 @@ def test_run(
 
     
 def test_run_pgo_disabled(
-    argv, distribution, extension, extension2, cython_extension,
+    argv, distribution,
+    extension, extension2, cython_extension, mypyc_extension,
     pgo_lib_dir, pgo_temp_dir,
     lib_dir, temp_dir,
     py_modules, packages
@@ -379,6 +426,12 @@ def test_run_pgo_disabled(
     assert [
         f for f in lib_contents
         if f.startswith(cython_extension.name)
+        if f.endswith('.pyd') or f.endswith('.so')
+    ]
+    # mypyc_extension is in the build dir
+    assert [
+        f for f in lib_contents
+        if f.startswith(mypyc_extension.name)
         if f.endswith('.pyd') or f.endswith('.so')
     ]
     # pure python modules are "built"
