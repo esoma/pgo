@@ -5,15 +5,15 @@ import setuptools
 
 # cython
 from Cython.Build import cythonize
-# mypy
-from mypyc.build import mypycify
 # pytest
 import pytest
 # python
 import os
 import pathlib
+import platform
 import sys
 import tempfile
+from warnings import warn
 # setuptools
 from setuptools import find_packages, Extension
 
@@ -54,12 +54,29 @@ def cython_extension():
     
 @pytest.fixture
 def mypyc_extension():
-    target_dir = tempfile.TemporaryDirectory()
-    yield mypycify(
-        [str(TEST_DIR / 'src/_pgo_test_mypyc.py')],
-        target_dir=target_dir.name,
-    )[0]
-    target_dir.cleanup()
+    try:
+        from mypyc.build import mypycify
+    except ImportError:
+        # mypy doesn't work on PyPy < 3.8:
+        # https://github.com/python/typed_ast/issues/111
+        if not (platform.python_implementation() == 'PyPy' and
+            sys.version_info < (3, 8)):
+            raise
+        mypycify = None
+
+    if mypycify is None:
+        yield Extension(
+            '_pgo_test_mypyc',
+            sources=[str(TEST_DIR / 'src/_pgo_test_mypyc_not_installed.c')],
+            language='c'
+        )
+    else:
+        target_dir = tempfile.TemporaryDirectory()
+        yield mypycify(
+            [str(TEST_DIR / 'src/_pgo_test_mypyc.py')],
+            target_dir=target_dir.name,
+        )[0]
+        target_dir.cleanup()
     
     
 @pytest.fixture
