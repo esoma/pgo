@@ -9,6 +9,7 @@ import pytest
 import filecmp
 import os
 import sys
+import tempfile
 import textwrap
 # setuptools
 import distutils.errors
@@ -44,7 +45,15 @@ def distribution(
             ]
         }
     })
-        
+    
+@pytest.fixture
+def record_file():
+    file = tempfile.NamedTemporaryFile(delete=False)
+    file.close()
+    yield file.name
+    os.remove(file.name)
+
+
 @pytest.mark.parametrize("extra_build_flags", [
     [],
     ['--pgo-disable'],
@@ -56,11 +65,12 @@ def test_run(
     lib_dir, temp_dir,
     distribution,
     py_modules, packages,
-    install_dir,
+    install_dir, record_file,
 ):
     argv.extend([
         'install',
         '--install-lib', install_dir,
+        '--record', record_file,
         'build',
         *extra_build_flags,
         '--build-lib', lib_dir,
@@ -68,12 +78,21 @@ def test_run(
     ])
     distribution.parse_command_line()
     distribution.run_commands()
+    with open(record_file) as record:
+        records = [r.strip() for r in record.readlines()]
     # find the egg
     egg_dir = os.path.join(
         install_dir,
         [f for f in os.listdir(install_dir) if f.endswith('.egg')][0]
     )
+    if sys.platform == 'win32':
+        # the record outputs all lowercase paths on windows and since windows
+        # is case insensitive we make it easier to compare by making everything
+        # lowercase
+        egg_dir = egg_dir.lower()
     egg_contents = os.listdir(egg_dir)
+    for record in records:
+        assert record.startswith(egg_dir)
     # extension in the installed egg is the same one as the build lib
     extension_file = [
         f for f in egg_contents
@@ -85,6 +104,7 @@ def test_run(
         os.path.join(lib_dir, extension_file),
         shallow=False,
     )
+    assert os.path.join(egg_dir, extension_file) in records
     # extension2 in the installed egg is the same one as the build lib
     extension2_file = [
         f for f in egg_contents
@@ -96,6 +116,7 @@ def test_run(
         os.path.join(lib_dir, extension2_file),
         shallow=False,
     )
+    assert os.path.join(egg_dir, extension2_file) in records
     # cython_extension in the installed egg is the same one as the build lib
     cython_extension_file = [
         f for f in egg_contents
@@ -107,6 +128,7 @@ def test_run(
         os.path.join(lib_dir, cython_extension_file),
         shallow=False,
     )
+    assert os.path.join(egg_dir, cython_extension_file) in records
     # mypyc_extension is in the installed egg
     mypyc_extension_file = [
         f for f in egg_contents
@@ -118,10 +140,13 @@ def test_run(
         os.path.join(lib_dir, mypyc_extension_file),
         shallow=False,
     )
+    assert os.path.join(egg_dir, mypyc_extension_file) in records
     # pure python modules are installed
     for module in py_modules:
         assert f'{module}.py' in egg_contents
+        assert os.path.join(egg_dir, f'{module}.py') in records
     # pure python packages are installed
     for package in packages:
         assert package in egg_contents
         assert '__init__.py' in os.listdir(os.path.join(egg_dir, package))
+        assert os.path.join(egg_dir, package, f'__init__.py') in records
