@@ -27,6 +27,10 @@ class profile(Command):
         )
         for name, value, desc in PGO_BUILD_USER_OPTIONS
     ]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.profiled = False
 
     def initialize_options(self):
         self.profile_command = None
@@ -43,12 +47,22 @@ class profile(Command):
     def run(self):
         if self.dry_run:
             return
+        # skip running the profile if we've ran build_ext_profile_generate and
+        # it didn't do anything
+        if self.distribution.have_run.get('build_ext_profile_generate'):
+            build_ext = self.distribution.get_command_obj(
+                'build_ext_profile_generate'
+            )
+            if not build_ext.did_build():
+                return
+            
         env = dict(os.environ)
         env["PGO_BUILD_LIB"] = self.build_lib
         env["PGO_BUILD_TEMP"] = self.build_temp
         env["PGO_PYTHON"] = sys.executable
         env["PYTHONPATH"] = self.generate_python_path(env)
         self.run_command(self.profile_command, env)
+        self.profiled = True
 
     def run_command(self, profile_command, env):
         try:

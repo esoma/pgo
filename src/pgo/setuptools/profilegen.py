@@ -94,43 +94,26 @@ def make_build_ext_profile_generate(base_class):
             )
             super().finalize_options()
             
-            
         def build_extension(self, ext):
             if ext.name in self.distribution.pgo.get("ignore_extensions", []):
                 super().build_extension(ext)
             else:
                 self.build_extension_with_pgo(ext)
 
-            
         def build_extension_with_pgo(self, ext):
             ext = deepcopy(ext)
+            ext_path = self.get_ext_fullpath(ext.name)
             if is_msvc(self.compiler):
                 # since we're profiling in a different directory than we're
                 # building we need to direct the compiler to the "pgd" (and
                 # adjacent "pgc" files) to use, to do that properly we need to
                 # explicitly name our "pgd" file
-                ext_path = self.get_ext_fullpath(ext.name)
                 pgd = _get_pgd(
                     os.path.relpath(ext_path, self.build_lib),
                     self.build_lib
                 )
                 ext.extra_compile_args.append('/GL')
                 ext.extra_link_args.append(f'/GENPROFILE:PGD={pgd}')
-                # the pgo runtime dll is required when /GENPROFILE is applied,
-                # since this is a dev lib it's not normally on the path and 
-                # because of Python's DLL import rules in 3.8 there isn't an
-                # easy way to just add it to the importable path, so we'll copy
-                # it next to the extension that we build
-                pgort_dll = _get_pgort_dll()
-                mkpath(os.path.dirname(ext_path), dry_run=self.dry_run)
-                copy_file(
-                    pgort_dll, 
-                    os.path.join(
-                        os.path.dirname(ext_path),
-                        os.path.basename(pgort_dll)
-                    ),
-                    dry_run=self.dry_run
-                )
             elif is_clang(self.compiler):
                 # clang generates ".profraw" files that then need to be 
                 # combined into a single ".profdata" file later, so we specify
@@ -144,7 +127,30 @@ def make_build_ext_profile_generate(base_class):
             else:
                 ext.extra_compile_args.append('-fprofile-generate')
                 ext.extra_link_args.append('-fprofile-generate')
+                
             super().build_extension(ext)
+            
+            if self.did_build():
+                if is_msvc(self.compiler):
+                    # the pgo runtime dll is required when /GENPROFILE is
+                    # applied, since this is a dev lib it's not normally on the
+                    # path and  because of Python's DLL import rules in 3.8
+                    # there isn't an easy way to just add it to the importable
+                    # path, so we'll copy it next to the extension that we
+                    # build
+                    pgort_dll = _get_pgort_dll()
+                    mkpath(os.path.dirname(ext_path), dry_run=self.dry_run)
+                    copy_file(
+                        pgort_dll, 
+                        os.path.join(
+                            os.path.dirname(ext_path),
+                            os.path.basename(pgort_dll)
+                        ),
+                        dry_run=self.dry_run
+                    )
+
+        def did_build(self):
+            return hasattr(self, '_built_objects')
         
     return build_ext_profile_generate
 

@@ -79,6 +79,13 @@ def make_build_ext_profile_use(base_class):
                 ('build_lib', 'build_lib'),
             )
             super().finalize_options()
+            
+        def run(self):
+            # force building if the profile command actually profiled
+            profile = self.distribution.get_command_obj('profile')
+            if profile.profiled:
+                self.force = 1
+            super().run()
 
         def build_extension(self, ext):
             if ext.name in self.distribution.pgo.get("ignore_extensions", []):
