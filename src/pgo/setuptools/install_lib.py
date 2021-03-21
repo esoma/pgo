@@ -11,9 +11,5 @@ def make_install_lib(base_class):
         def build(self):
             if not self.skip_build:
                 self.run_command('build')
-                
-        def get_inputs(self):
-            build = self.get_finalized_command('build')
-            return build.get_outputs()
 
     return install_lib
