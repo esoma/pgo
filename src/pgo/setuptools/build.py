@@ -56,7 +56,6 @@ def make_build(base_class):
             self.run_no_pgo()
 
         def run_pgo(self):
-            self.run_command('clean_profile_generate')
             self.run_command('build_profile_generate')
             self.run_command('profile')
             self.run_command('build_profile_use')
