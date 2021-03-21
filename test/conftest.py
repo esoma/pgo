@@ -145,3 +145,24 @@ def temp_dir():
         dir.cleanup()
     except FileNotFoundError:
         pass
+
+
+@pytest.fixture
+def install_dir():
+    dir = tempfile.TemporaryDirectory()
+    
+    python_path = os.environ.get("PYTHONPATH", '').split(os.pathsep)
+    python_path.append(dir.name)
+    os.environ["PYTHONPATH"] = os.pathsep.join(python_path)
+    
+    yield dir.name
+    
+    python_path = os.environ.get("PYTHONPATH", '').split(os.pathsep)
+    while dir.name in python_path:
+        python_path.remove(dir.name)
+    os.environ["PYTHONPATH"] = os.pathsep.join(python_path)
+    
+    try:
+        dir.cleanup()
+    except FileNotFoundError:
+        pass
