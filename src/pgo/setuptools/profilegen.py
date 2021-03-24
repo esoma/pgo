@@ -122,11 +122,11 @@ def make_build_ext_profile_generate(base_class):
                 # step
                 profdata_dir = _get_profdata_dir(self.build_temp)
                 profile_generate_flag = f'-fprofile-generate={profdata_dir}'
-                ext.extra_compile_args.append(profile_generate_flag)
-                ext.extra_link_args.append(profile_generate_flag)
+                ext.extra_compile_args.extend([profile_generate_flag, '-flto'])
+                ext.extra_link_args.extend([profile_generate_flag, '-flto'])
             else:
-                ext.extra_compile_args.append('-fprofile-generate')
-                ext.extra_link_args.append('-fprofile-generate')
+                ext.extra_compile_args.extend(['-fprofile-generate', '-flto'])
+                ext.extra_link_args.extend(['-fprofile-generate', '-flto'])
                 
             super().build_extension(ext)
             

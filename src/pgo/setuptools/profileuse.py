@@ -161,16 +161,18 @@ def make_build_ext_profile_use(base_class):
                     except subprocess.CalledProcessError as ex:
                         raise ProfileError(ex)
                 profile_use_flag = f'-fprofile-use={profdata}'
-                ext.extra_compile_args.append(profile_use_flag)
-                ext.extra_link_args.append(profile_use_flag)
+                ext.extra_compile_args.extend([profile_use_flag, '-flto'])
+                ext.extra_link_args.extend([profile_use_flag, '-flto'])
             else:
                 ext.extra_compile_args.extend([
                     '-fprofile-use',
                     '-Werror=missing-profile',
+                    '-flto',
                 ])
                 ext.extra_link_args.extend([
                     '-fprofile-use',
                     '-Werror=missing-profile',
+                    '-flto',
                 ])
             try:
                 super().build_extension(ext)
