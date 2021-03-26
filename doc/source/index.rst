@@ -1,20 +1,28 @@
-.. pgo documentation master file, created by
-   sphinx-quickstart on Fri Mar 26 13:57:32 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Welcome to pgo's documentation!
-===============================
+pgo: faster Python extensions
+=============================
 
+**pgo** seamlessly integrates profiling into the build process of Python
+extensions. No need for custom build scripts or hacking
+`setuptools <https://setuptools.readthedocs.io/en/latest/>`_.
+
+Features
+--------
+ * increase the speed of your C, C++, Cython or mypyc extensions
+ * falls back to non-pgo builds if compiler support is unavailable
+ * supports Linux, Windows and MacOS
+ * supports Python 3.6+ (CPython and PyPy)
+ 
+ 
+User Guide
+------------------
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+    :maxdepth: 1
+    
+    how
+    quickstart
 
 
 
-Indices and tables
-==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+
