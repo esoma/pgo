@@ -4,9 +4,8 @@ name: test
 on:
   push:
     branches: [ main ]
-    paths:
-      - '**'
-      - '!doc/**'
+    paths-ginore:
+    - 'doc/**'
   pull_request:
     branches: [ main ]
 
