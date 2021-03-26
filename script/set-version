@@ -48,12 +48,25 @@ def update_init(version):
     with open(init_path, 'r', encoding='utf-8') as f:
         init = f.read()
     init = re.sub(
-        "__version__ = '\d+\.\d+\.\d+'",
+        r"__version__ = '\d+\.\d+\.\d+'",
         f"__version__ = '{version}'",
         init
     )
     with open(init_path, 'w', encoding='utf-8') as f:
         f.write(init)
+        
+        
+def update_doc_conf(version):
+    doc_conf_path = REPO / 'doc/source/conf.py'
+    with open(doc_conf_path, 'r', encoding='utf-8') as f:
+        doc_conf = f.read()
+    doc_conf = re.sub(
+        r"release = \'\d+\.\d+\.\d+\'",
+        f"release = '{version}'",
+        doc_conf
+    )
+    with open(doc_conf_path, 'w', encoding='utf-8') as f:
+        f.write(doc_conf)
 
 
 if __name__ == '__main__':
@@ -62,3 +75,5 @@ if __name__ == '__main__':
     
     update_readme(args.version)
     update_init(args.version)
+    
+    update_doc_conf(args.version)
