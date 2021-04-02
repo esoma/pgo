@@ -3,17 +3,13 @@ __all__ = ['profile', 'ProfileError']
 
 # pgo
 from .command import PGO_BUILD_USER_OPTIONS
+from .error import ProfileError
 # python
 import os
 import subprocess
 import sys
 # setuptools
-from distutils.errors import DistutilsExecError
 from setuptools import Command
-
-
-class ProfileError(DistutilsExecError):
-    pass
 
 
 class profile(Command):
@@ -56,35 +52,34 @@ class profile(Command):
             if not build_ext.did_build():
                 return
             
-        env = dict(os.environ)
-        env["PGO_BUILD_LIB"] = self.build_lib
-        env["PGO_BUILD_TEMP"] = self.build_temp
-        env["PGO_PYTHON"] = sys.executable
-        env["PYTHONPATH"] = self.generate_python_path(env)
-        self.run_command(self.profile_command, env)
+        _run_profile(self.build_lib, self.build_temp, self.profile_command)
         self.profiled = True
 
-    def run_command(self, profile_command, env):
-        try:
-            subprocess.run(profile_command, check=True, env=env)
-        except FileNotFoundError as ex:
-            raise ProfileError(
-                f'Profile command ({" ".join(profile_command)}) '
-                f'failed, the command could not be found'
-            )
-        except subprocess.CalledProcessError as ex:
-            raise ProfileError(
-                f'Profile command ({" ".join(profile_command)}) '
-                f'exited with error: {ex.returncode}'
-            )
+        
+def _run_profile(build_lib, build_temp, profile_command):
+    env = dict(os.environ)
+    env["PGO_BUILD_LIB"] = build_lib
+    env["PGO_BUILD_TEMP"] = build_temp
+    env["PGO_PYTHON"] = sys.executable
+    
+    python_path = env.get("PYTHONPATH")
+    if python_path:
+        python_path = python_path.split(os.pathsep)
+    else:
+        python_path = []
+    python_path.insert(0, build_lib)
+    env["PYTHONPATH"] = os.pathsep.join(python_path)
+    
+    try:
+        subprocess.run(profile_command, check=True, env=env)
+    except FileNotFoundError as ex:
+        raise ProfileError(
+            f'Profile command ({" ".join(profile_command)}) '
+            f'failed, the command could not be found'
+        )
+    except subprocess.CalledProcessError as ex:
+        raise ProfileError(
+            f'Profile command ({" ".join(profile_command)}) '
+            f'exited with error: {ex.returncode}'
+        )
 
-    def generate_python_path(self, env):
-        # generates the appropriate PYTHONPATH for the existing environment with
-        # the build_lib at the front of it
-        python_path = env.get("PYTHONPATH")
-        if python_path:
-            python_path = python_path.split(os.pathsep)
-        else:
-            python_path = []
-        python_path.insert(0, self.build_lib)
-        return os.pathsep.join(python_path)

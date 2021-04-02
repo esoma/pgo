@@ -6,8 +6,8 @@ __all__ = [
 
 # pgo
 from .command import PGO_BUILD_USER_OPTIONS
-from .compiler import (is_clang, is_msvc, _get_pgd, _get_profdata,
-                       _get_profdata_dir)
+from .compiler import is_clang, is_msvc, _get_pgd, _merge_profdata
+from .error import ProfileUseError
 from .util import _dir_to_pgo_dir
 # python
 from copy import deepcopy
@@ -16,11 +16,7 @@ import re
 import subprocess
 import sys
 # setuptools
-from distutils.errors import CompileError, DistutilsExecError, LinkError
-
-
-class ProfileError(DistutilsExecError):
-    pass
+from distutils.errors import CompileError, LinkError
 
 
 def make_build_profile_use(base_class):
@@ -93,7 +89,6 @@ def make_build_ext_profile_use(base_class):
             else:
                 self.build_extension_with_pgo(ext)
                 
-
         def build_extension_with_pgo(self, ext):
             ext = deepcopy(ext)
             if is_msvc(self.compiler):
@@ -125,41 +120,17 @@ def make_build_ext_profile_use(base_class):
                         if pgc_pattern.match(file):
                             break
                     else:
-                        raise ProfileError(
+                        raise ProfileUseError(
                             f'No .PCG matching "{pgd_name}!*.pgc" in '
                             f'{pgd_dirname}'
                         )
             elif is_clang(self.compiler):
-                # we need to combine the ".profraw" files that clang generates
-                # into a ".profdata" file
-                profdata_dir = _get_profdata_dir(self.build_temp)
-                profdata = _get_profdata(self.pgo_build_lib)
-                if not self.dry_run:
-                    # all the ".profraw" files for this extension should be in
-                    # the profdata_dir that we specified in the generate step
-                    try:
-                        profraws = [
-                            os.path.join(profdata_dir, raw)
-                            for raw in os.listdir(profdata_dir)
-                            if raw.endswith('.profraw')
-                        ]
-                    except FileNotFoundError as ex:
-                        raise ProfileError(ex)
-                    # llvm-profdata will merge our ".profraw" data into the
-                    # correct ".profdata" file we need
-                    llvm_profdata_merge = [
-                        'llvm-profdata', 'merge',
-                        f'-output={profdata}',
-                        *profraws
-                    ]
-                    if sys.platform == 'darwin':
-                        # on macs the llvm-profdata command isn't normally on
-                        # the path, so run it through xcrun
-                        llvm_profdata_merge.insert(0, 'xcrun')
-                    try:
-                        subprocess.run(llvm_profdata_merge, check=True)
-                    except subprocess.CalledProcessError as ex:
-                        raise ProfileError(ex)
+                profdata = _merge_profdata(
+                    self.dry_run,
+                    self.pgo_build_lib,
+                    self.build_temp,
+                    ext
+                )
                 profile_use_flag = f'-fprofile-use={profdata}'
                 ext.extra_compile_args.extend([profile_use_flag])
                 ext.extra_link_args.extend([profile_use_flag])
@@ -177,6 +148,6 @@ def make_build_ext_profile_use(base_class):
             try:
                 super().build_extension(ext)
             except (CompileError, LinkError) as ex:
-                raise ProfileError(ex)
+                raise ProfileUseError(ex)
         
     return build_ext_profile_use

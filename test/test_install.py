@@ -2,7 +2,7 @@
 # pgo
 import pgo
 from pgo.setuptools import compiler
-from pgo.setuptools.profileuse import ProfileError
+from pgo.setuptools.error import ProfileUseError
 # pytest
 import pytest
 # python

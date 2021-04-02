@@ -21,6 +21,7 @@ User Guide
     
     how
     quickstart
+    profiletips
 
 
 

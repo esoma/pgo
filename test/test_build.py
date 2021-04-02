@@ -2,7 +2,7 @@
 # pgo
 import pgo
 from pgo.setuptools import compiler
-from pgo.setuptools.profileuse import ProfileError
+from pgo.setuptools.error import ProfileUseError
 # pytest
 import pytest
 # python
@@ -147,7 +147,7 @@ def test_run_no_profile_data_pgo_required(
         }
     })
     distribution.parse_command_line()
-    with pytest.raises(ProfileError) as ex:
+    with pytest.raises(ProfileUseError) as ex:
         distribution.run_commands()
 
 

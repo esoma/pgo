@@ -1,9 +1,14 @@
 
 __all__ = ['is_clang', 'is_msvc']
 
+# pgo
+from .error import ProfileError, ProfileUseError
+from .profile import _run_profile
 # python
 import os
+from pathlib import Path
 import subprocess
+import sys
 try:
     import winreg
 except ModuleNotFoundError:
@@ -38,12 +43,66 @@ def _get_pgd(rel_ext_path, pgo_build_lib):
     return os.path.join(pgo_build_lib, f'{rel_ext_path}.pgd')
     
     
-def _get_profdata(pgo_build_lib):
-    return os.path.join(pgo_build_lib, '.pgo-profdata')
-    
-    
-def _get_profdata_dir( pgo_build_temp):
+def _get_profdata_dir(pgo_build_temp):
     return os.path.join(pgo_build_temp, '.pgo-profdatas')
+    
+    
+def _merge_profdata(dry_run, pgo_build_lib, pgo_build_temp, extension):
+    profdata = os.path.join(pgo_build_lib, f'.pgo-profdata-{extension.name}')
+    if dry_run:
+        return profdata
+    # all of the clang profile data is built in the same directory without 
+    # any real distinguishing features
+    #
+    # this presents a problem when multiple extensions are being profiled,
+    # because we need to direct the extension to the profile data specifically
+    # belonging to it
+    #
+    # in order to figure that out we'll just import the instrumented extension,
+    # which should update the mtime of the profile data, then we know that the
+    # latest updated profile is the one for this extension
+    profdata_dir = _get_profdata_dir(pgo_build_temp)
+    try:
+        profraws = set(Path(profdata_dir).iterdir())
+    except FileNotFoundError:
+        profraws = set()
+    try:
+        _run_profile(
+            pgo_build_lib,
+            pgo_build_temp,
+            [sys.executable, '-c', f'import {extension.name}']
+        )
+    except ProfileError as ex:
+        raise ProfileUseError(ex)
+    try:
+        profraw = sorted(
+            Path(profdata_dir).iterdir(),
+            key=os.path.getmtime
+        )[-1]
+    except IndexError:
+        raise ProfileUseError(f'missing profile data for {extension.name}')
+    # it's possible there is a problem with the actual profiling script that
+    # prevents it from generating the profile data, so we might just be
+    # creating a dummy profraw, make sure it existed before we ran our little
+    # hack
+    if profraw not in profraws:
+        raise ProfileUseError(f'missing profile data for {extension.name}')
+    # llvm-profdata will merge our profraw data into the correct profdata file
+    # we need
+    llvm_profdata_merge = [
+        'llvm-profdata', 'merge',
+        f'-output={profdata}',
+        profraw
+    ]
+    if sys.platform == 'darwin':
+        # on macs the llvm-profdata command isn't normally on
+        # the path, so run it through xcrun
+        llvm_profdata_merge.insert(0, 'xcrun')
+    try:
+        subprocess.run(llvm_profdata_merge, check=True)
+    except subprocess.CalledProcessError as ex:
+        raise ProfileUseError(ex)
+    return profdata
 
 
 def _get_pgort_dll():

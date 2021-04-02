@@ -2,7 +2,7 @@
 # pgo
 import pgo
 from pgo.setuptools import compiler
-from pgo.setuptools.profileuse import ProfileError
+from pgo.setuptools.profileuse import ProfileUseError
 # pytest
 import pytest
 # python
@@ -134,7 +134,7 @@ def test_run_no_profile_data(
         '--build-temp', temp_dir,
     ])
     distribution.parse_command_line()
-    with pytest.raises(ProfileError):
+    with pytest.raises(ProfileUseError):
         distribution.run_commands()
         
 
