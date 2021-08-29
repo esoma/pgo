@@ -13,8 +13,6 @@ from .util import _dir_to_pgo_dir
 from copy import deepcopy
 import os
 import re
-import subprocess
-import sys
 # setuptools
 from distutils.errors import CompileError, LinkError
 
