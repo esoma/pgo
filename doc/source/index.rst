@@ -21,4 +21,6 @@ User Guide
     
     how
     quickstart
+    profiling
     commands
+    details-and-compatibility
