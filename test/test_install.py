@@ -52,6 +52,16 @@ def record_file():
     file.close()
     yield file.name
     os.remove(file.name)
+    
+    
+@pytest.fixture
+def egg_base_dir():
+    dir = tempfile.TemporaryDirectory()
+    yield dir.name
+    try:
+        dir.cleanup()
+    except FileNotFoundError:
+        pass
 
 
 @pytest.mark.parametrize("extra_build_flags", [
@@ -65,7 +75,7 @@ def test_run(
     lib_dir, temp_dir,
     distribution,
     py_modules, packages,
-    install_dir, record_file,
+    install_dir, record_file, egg_base_dir
 ):
     argv.extend([
         'install',
@@ -75,6 +85,8 @@ def test_run(
         *extra_build_flags,
         '--build-lib', lib_dir,
         '--build-temp', temp_dir,
+        'egg_info',
+        '--egg-base', egg_base_dir,
     ])
     distribution.parse_command_line()
     distribution.run_commands()
