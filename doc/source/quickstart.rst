@@ -49,7 +49,8 @@ Configuring the build
 
 We need to configure our build tools to tell **pgo** how to execute our
 profiling script. How to do this depends on if you're using a traditional
-``setup.py`` file or the newer ``setup.cfg``.
+``setup.py`` file or the newer ``setup.cfg``. Optionally you can also add
+**pgo** to your ``pyproject.toml`` build system requirements.
 
 setup.py
 ^^^^^^^^
@@ -79,6 +80,16 @@ setup.cfg
 
 Note that we used a Python script here, technically you can use whatever kind
 of command you like as long as it executes your module.
+
+
+pyproject.toml
+^^^^^^^^^^^^^^
+
+.. code-block:: toml
+
+    [build-system]
+    requires = ["setuptools >= 40.6.0", "wheel", "pgo"]
+    build-backend = "setuptools.build_meta"
 
 
 Building

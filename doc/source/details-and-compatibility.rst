@@ -37,3 +37,10 @@ The "default" compiler for each major platform is supported. That is:
 "Unusual" combinations like Windows & GCC very well *may* work, but are
 untested. If a combination of your choice is not supported feel free to open
 an issue.
+
+
+What build backends are supported?
+----------------------------------
+
+Currently only **setuptools** is supported. If you want support for something
+else like **poetry** feel free to open an issue.
