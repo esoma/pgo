@@ -66,7 +66,7 @@ def mypyc_extension():
             # https://github.com/python/typing/issues/865
             (platform.python_implementation() == 'CPython' and
              sys.version_info == (3, 10))
-        )
+        ):
             mypycify = None
         else:
             raise
