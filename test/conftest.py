@@ -57,12 +57,19 @@ def mypyc_extension():
     try:
         from mypyc.build import mypycify
     except ImportError:
-        # mypy doesn't work on PyPy < 3.8:
-        # https://github.com/python/typed_ast/issues/111
-        if not (platform.python_implementation() == 'PyPy' and
-            sys.version_info < (3, 8)):
+        if (
+            # mypy doesn't work on PyPy < 3.8
+            # https://github.com/python/typed_ast/issues/111
+            (platform.python_implementation() == 'PyPy' and
+             sys.version_info < (3, 8)) or
+            # mypy doesn't work on CPython 3.10
+            # https://github.com/python/typing/issues/865
+            (platform.python_implementation() == 'CPython' and
+             sys.version_info == (3, 10))
+        )
+            mypycify = None
+        else:
             raise
-        mypycify = None
 
     if mypycify is None:
         yield Extension(
