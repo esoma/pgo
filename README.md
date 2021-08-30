@@ -8,6 +8,7 @@
 [![documentation](https://img.shields.io/readthedocs/pgo?style=flat-square)](https://pgo.readthedocs.io/en/latest/)
 
 `pgo` brings easy and unobtrusive profile guided optimization to Python
-extensions.
+extensions to make them even faster.
 
-Work in progress.
+See the [quick start](https://pgo.readthedocs.io/en/latest/quickstart.html) for
+basic setup.
