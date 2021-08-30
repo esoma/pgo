@@ -65,7 +65,7 @@ def mypyc_extension():
             # mypy doesn't work on CPython 3.10
             # https://github.com/python/typing/issues/865
             (platform.python_implementation() == 'CPython' and
-             sys.version_info == (3, 10))
+             sys.version_info[:2] == (3, 10))
         ):
             mypycify = None
         else:
