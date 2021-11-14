@@ -144,15 +144,17 @@ def make_build_ext_profile_generate(base_class):
                     # path, so we'll copy it next to the extension that we
                     # build
                     pgort_dll = _get_pgort_dll()
-                    mkpath(os.path.dirname(ext_path), dry_run=self.dry_run)
-                    copy_file(
-                        pgort_dll, 
-                        os.path.join(
-                            os.path.dirname(ext_path),
-                            os.path.basename(pgort_dll)
-                        ),
-                        dry_run=self.dry_run
+                    target_pgort_dll = os.path.join(
+                        os.path.dirname(ext_path),
+                        os.path.basename(pgort_dll)
                     )
+                    if not os.path.exists(target_pgort_dll):
+                        mkpath(os.path.dirname(ext_path), dry_run=self.dry_run)
+                        copy_file(
+                            pgort_dll, 
+                            target_pgort_dll,
+                            dry_run=self.dry_run
+                        )
 
         def did_build(self):
             return hasattr(self, '_built_objects')

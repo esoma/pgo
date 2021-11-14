@@ -5,6 +5,7 @@ __all__ = ['is_clang', 'is_msvc']
 from .error import ProfileError, ProfileUseError
 from .profile import _run_profile
 # python
+import functools
 import os
 from pathlib import Path
 import subprocess
@@ -105,6 +106,7 @@ def _merge_profdata(dry_run, pgo_build_lib, pgo_build_temp, extension):
     return profdata
 
 
+@functools.cache
 def _get_pgort_dll():
     out = subprocess.check_output([
         'cmd', '/u', '/c', *_get_vcvarsall(), '>nul', '2>nul',
